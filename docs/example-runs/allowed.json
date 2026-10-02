@@ -1,0 +1,66 @@
+{
+  "example": "allowed",
+  "status": "allowed",
+  "output": "Unit tests are useful because they ensure code works as expected, catch bugs early, and allow for safe refactoring.",
+  "model": {
+    "model": "qwen2.5:latest",
+    "digest": "845dbda0ea48ed749caafd9e6037047aa19acfcfd82e704d7ca97d631a0b697e",
+    "runtime": "0.34.0",
+    "endpoint": "http://localhost:11434/v1",
+    "started_at": "2026-10-02T05:25:37.286183+00:00",
+    "temperature": 0,
+    "max_tokens": 256,
+    "requests": 1
+  },
+  "decisions": [
+    {
+      "point": "agent_startup",
+      "decision": "allow",
+      "reason": null,
+      "resolved_by": null,
+      "session_id": "1704122e-cbe0-4138-b95a-506876a19a91",
+      "sequence": 0
+    },
+    {
+      "point": "input",
+      "decision": "allow",
+      "reason": null,
+      "resolved_by": null,
+      "session_id": "1704122e-cbe0-4138-b95a-506876a19a91",
+      "sequence": 1
+    },
+    {
+      "point": "pre_model_call",
+      "decision": "allow",
+      "reason": null,
+      "resolved_by": null,
+      "session_id": "f3fc8093-0df7-47ae-8005-98e45fec0b6b",
+      "sequence": 0
+    },
+    {
+      "point": "post_model_call",
+      "decision": "allow",
+      "reason": null,
+      "resolved_by": null,
+      "session_id": "f3fc8093-0df7-47ae-8005-98e45fec0b6b",
+      "sequence": 1
+    },
+    {
+      "point": "output",
+      "decision": "allow",
+      "reason": null,
+      "resolved_by": null,
+      "session_id": "1704122e-cbe0-4138-b95a-506876a19a91",
+      "sequence": 2
+    },
+    {
+      "point": "agent_shutdown",
+      "decision": "allow",
+      "reason": null,
+      "resolved_by": null,
+      "session_id": "1704122e-cbe0-4138-b95a-506876a19a91",
+      "sequence": 3
+    }
+  ],
+  "details": {}
+}

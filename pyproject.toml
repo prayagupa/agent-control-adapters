@@ -1,0 +1,52 @@
+[project]
+name = "agent-hooks-adapters-workspace"
+version = "0.1.0"
+description = "Development workspace for independently packaged agent-hooks adapters"
+requires-python = ">=3.11,<3.14"
+dependencies = ["agent-hooks-crewai"]
+
+[tool.uv]
+package = false
+
+[[tool.uv.index]]
+name = "pypi"
+url = "https://pypi.org/simple"
+default = true
+
+[tool.uv.workspace]
+members = ["packages/*"]
+
+[tool.uv.sources]
+agent-hooks-crewai = { workspace = true }
+
+[dependency-groups]
+dev = [
+    "bandit>=1.8,<2",
+    "build>=1.2,<2",
+    "httpx>=0.28,<0.29",
+    "openai>=2.30,<3",
+    "pip-audit>=2.9,<3",
+    "pyright>=1.1.400,<2",
+    "pytest>=8.3,<10",
+    "ruff>=0.15,<0.16",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "SIM", "RUF"]
+
+[tool.pyright]
+typeCheckingMode = "strict"
+pythonVersion = "3.11"
+include = ["packages/crewai/src", "examples"]
+venvPath = "."
+venv = ".venv"
+
+[tool.pytest.ini_options]
+testpaths = ["packages/crewai/tests", "tests"]
+pythonpath = ["."]
+addopts = "-ra -p no:agent_hooks_ctk"
+markers = ["e2e: requires the operator-managed local Ollama model"]

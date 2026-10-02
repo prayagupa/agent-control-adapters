@@ -1,0 +1,95 @@
+{
+  "example": "multi_agent",
+  "status": "allowed",
+  "output": "Implement code reviews early in the development process to ensure functionality and correctness while identifying potential security vulnerabilities.",
+  "model": {
+    "model": "qwen2.5:latest",
+    "digest": "845dbda0ea48ed749caafd9e6037047aa19acfcfd82e704d7ca97d631a0b697e",
+    "runtime": "0.34.0",
+    "endpoint": "http://localhost:11434/v1",
+    "started_at": "2026-10-02T05:26:23.677524+00:00",
+    "temperature": 0,
+    "max_tokens": 256,
+    "requests": 2
+  },
+  "decisions": [
+    {
+      "point": "agent_startup",
+      "decision": "allow",
+      "reason": null,
+      "resolved_by": null,
+      "session_id": "daa1c307-99cf-4898-a666-1afec1758a0a",
+      "sequence": 0
+    },
+    {
+      "point": "input",
+      "decision": "allow",
+      "reason": null,
+      "resolved_by": null,
+      "session_id": "daa1c307-99cf-4898-a666-1afec1758a0a",
+      "sequence": 1
+    },
+    {
+      "point": "pre_model_call",
+      "decision": "allow",
+      "reason": null,
+      "resolved_by": null,
+      "session_id": "c0a208af-8bfe-470d-909e-120605380a77",
+      "sequence": 0
+    },
+    {
+      "point": "post_model_call",
+      "decision": "allow",
+      "reason": null,
+      "resolved_by": null,
+      "session_id": "c0a208af-8bfe-470d-909e-120605380a77",
+      "sequence": 1
+    },
+    {
+      "point": "pre_model_call",
+      "decision": "allow",
+      "reason": null,
+      "resolved_by": null,
+      "session_id": "784c58ae-8d14-459d-aeca-51b565889c5b",
+      "sequence": 0
+    },
+    {
+      "point": "post_model_call",
+      "decision": "allow",
+      "reason": null,
+      "resolved_by": null,
+      "session_id": "784c58ae-8d14-459d-aeca-51b565889c5b",
+      "sequence": 1
+    },
+    {
+      "point": "output",
+      "decision": "allow",
+      "reason": null,
+      "resolved_by": null,
+      "session_id": "daa1c307-99cf-4898-a666-1afec1758a0a",
+      "sequence": 2
+    },
+    {
+      "point": "agent_shutdown",
+      "decision": "allow",
+      "reason": null,
+      "resolved_by": null,
+      "session_id": "daa1c307-99cf-4898-a666-1afec1758a0a",
+      "sequence": 3
+    }
+  ],
+  "details": {
+    "researcher_agent_id": "744498c2-5f5b-471b-9463-60fb2c2ab988",
+    "editor_agent_id": "a5cabf78-1902-4c19-bd51-7fd79f610cec",
+    "researcher_policy_agents": [
+      "744498c2-5f5b-471b-9463-60fb2c2ab988"
+    ],
+    "editor_policy_agents": [
+      "a5cabf78-1902-4c19-bd51-7fd79f610cec"
+    ],
+    "task_outputs": [
+      "- Ensures functionality and correctness of the code.\n- Identifies potential security vulnerabilities early.",
+      "Implement code reviews early in the development process to ensure functionality and correctness while identifying potential security vulnerabilities."
+    ]
+  }
+}

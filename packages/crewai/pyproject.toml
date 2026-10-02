@@ -1,0 +1,17 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "agent-hooks-crewai"
+version = "0.1.0a1"
+description = "Execution-scoped agent-hooks governance for CrewAI"
+readme = "README.md"
+requires-python = ">=3.11,<3.14"
+dependencies = [
+  "crewai==1.15.23",
+  "agent-hooks-sdk==0.1.0a5",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/agent_hooks_crewai"]

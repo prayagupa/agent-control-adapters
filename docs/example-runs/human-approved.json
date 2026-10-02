@@ -1,0 +1,71 @@
+{
+  "example": "human_approval",
+  "status": "allowed",
+  "output": "Join us for an exciting community coding workshop where beginners and experts alike can learn, share, and grow together!",
+  "model": {
+    "model": "qwen2.5:latest",
+    "digest": "845dbda0ea48ed749caafd9e6037047aa19acfcfd82e704d7ca97d631a0b697e",
+    "runtime": "0.34.0",
+    "endpoint": "http://localhost:11434/v1",
+    "started_at": "2026-10-02T05:26:05.175302+00:00",
+    "temperature": 0,
+    "max_tokens": 256,
+    "requests": 1
+  },
+  "decisions": [
+    {
+      "point": "agent_startup",
+      "decision": "allow",
+      "reason": null,
+      "resolved_by": null,
+      "session_id": "80a3bc45-be6a-4fd9-bb5c-d0aad412b0dc",
+      "sequence": 0
+    },
+    {
+      "point": "input",
+      "decision": "allow",
+      "reason": null,
+      "resolved_by": null,
+      "session_id": "80a3bc45-be6a-4fd9-bb5c-d0aad412b0dc",
+      "sequence": 1
+    },
+    {
+      "point": "pre_model_call",
+      "decision": "allow",
+      "reason": null,
+      "resolved_by": null,
+      "session_id": "15b1a475-9010-4a7d-a127-093c78492f90",
+      "sequence": 0
+    },
+    {
+      "point": "post_model_call",
+      "decision": "allow",
+      "reason": null,
+      "resolved_by": null,
+      "session_id": "15b1a475-9010-4a7d-a127-093c78492f90",
+      "sequence": 1
+    },
+    {
+      "point": "output",
+      "decision": "allow",
+      "reason": null,
+      "resolved_by": "approval",
+      "session_id": "80a3bc45-be6a-4fd9-bb5c-d0aad412b0dc",
+      "sequence": 2
+    },
+    {
+      "point": "agent_shutdown",
+      "decision": "allow",
+      "reason": null,
+      "resolved_by": null,
+      "session_id": "80a3bc45-be6a-4fd9-bb5c-d0aad412b0dc",
+      "sequence": 3
+    }
+  ],
+  "details": {
+    "operator_decisions": [
+      "approve"
+    ],
+    "input_mode": "piped-test-input"
+  }
+}

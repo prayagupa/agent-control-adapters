@@ -1,0 +1,71 @@
+{
+  "example": "human_approval",
+  "status": "blocked",
+  "output": null,
+  "model": {
+    "model": "qwen2.5:latest",
+    "digest": "845dbda0ea48ed749caafd9e6037047aa19acfcfd82e704d7ca97d631a0b697e",
+    "runtime": "0.34.0",
+    "endpoint": "http://localhost:11434/v1",
+    "started_at": "2026-10-02T05:26:19.485242+00:00",
+    "temperature": 0,
+    "max_tokens": 256,
+    "requests": 1
+  },
+  "decisions": [
+    {
+      "point": "agent_startup",
+      "decision": "allow",
+      "reason": null,
+      "resolved_by": null,
+      "session_id": "80d88dfd-bcf1-4a0f-9255-6f79f47699b1",
+      "sequence": 0
+    },
+    {
+      "point": "input",
+      "decision": "allow",
+      "reason": null,
+      "resolved_by": null,
+      "session_id": "80d88dfd-bcf1-4a0f-9255-6f79f47699b1",
+      "sequence": 1
+    },
+    {
+      "point": "pre_model_call",
+      "decision": "allow",
+      "reason": null,
+      "resolved_by": null,
+      "session_id": "c4793acd-2695-4d1a-8c9f-ba2714233a03",
+      "sequence": 0
+    },
+    {
+      "point": "post_model_call",
+      "decision": "allow",
+      "reason": null,
+      "resolved_by": null,
+      "session_id": "c4793acd-2695-4d1a-8c9f-ba2714233a03",
+      "sequence": 1
+    },
+    {
+      "point": "output",
+      "decision": "deny",
+      "reason": "example:operator_rejected",
+      "resolved_by": "rejection",
+      "session_id": "80d88dfd-bcf1-4a0f-9255-6f79f47699b1",
+      "sequence": 2
+    },
+    {
+      "point": "agent_shutdown",
+      "decision": "allow",
+      "reason": null,
+      "resolved_by": null,
+      "session_id": "80d88dfd-bcf1-4a0f-9255-6f79f47699b1",
+      "sequence": 3
+    }
+  ],
+  "details": {
+    "operator_decisions": [
+      "reject"
+    ],
+    "input_mode": "piped-test-input"
+  }
+}

@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  crewai:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      OTEL_SDK_DISABLED: "true"
+      CREWAI_TRACING_ENABLED: "false"
+      CREWAI_TELEMETRY_ENABLED: "false"
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: astral-sh/setup-uv@d0d8abe699bfb85fec6de9f7adb5ae17292296ff # v6
+        with:
+          python-version: "3.11"
+          enable-cache: true
+      - run: uv sync --locked --group dev
+      - run: uv run --no-sync ruff check .
+      - run: uv run --no-sync ruff format --check .
+      - run: uv run --no-sync pyright
+      - run: uv run --no-sync pytest -m 'not e2e'
+      - run: uv build --package agent-hooks-crewai
+
+  security:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: astral-sh/setup-uv@d0d8abe699bfb85fec6de9f7adb5ae17292296ff # v6
+        with:
+          python-version: "3.11"
+          enable-cache: true
+      - run: uv sync --locked --group dev
+      - run: uv run --no-sync bandit -r packages/crewai/src examples -q
+      # Deliberately fail on known advisories; see SECURITY.md for the current blocker.
+      - run: uv run --no-sync pip-audit
