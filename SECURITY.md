@@ -18,9 +18,51 @@ Do not put secrets or sensitive data in policy reason strings, terminal approval
 prompts or example receipts. The console approval example is not authenticated
 and must not be used as a production authorization mechanism.
 
+## ACS configuration is trusted code
+
+The optional `policy_file` source uses the published native
+`agent-control-spec==0.4.0a4` interceptor. Policy paths, manifests, Rego modules,
+data, inheritance and annotators must be owned by the application, never chosen
+by a model, tool result or tenant request. Keep all referenced files immutable
+for the run. Native manifest parsing is eager, but Rego loading/compilation is
+lazy; a later failure does not roll back earlier agent/model/tool effects.
+
+Trusted manifests can reference HTTPS inheritance, configure blocking HTTP
+annotators, and select host environment credentials. This adapter does not
+filter egress, isolate credentials, or sandbox the dependency. Constructor
+inheritance is outside `timeout`/`emit_timeout`; native defaults include 30-second
+per-fetch deadlines, a 1-MiB response limit, five redirects and depth 16. These
+are dependency limits, not a total construction deadline.
+
+Native Rego defaults to a 5,000-ms deadline; `ACS_OPA_TIMEOUT_MS` and
+`ACS_REGO_V0` can change runtime behavior. A native deadline cannot kill
+nonpreemptible work. There are two native pools allowing up to 32 abandoned
+workers each, plus concurrent work, not a service-wide quota. Allocation failure
+or parser stack overflow can abort the process instead of returning a denial.
+Use terminating trusted policies, service-level admission and process isolation
+where required. Host worker cleanup does not prove all abandoned native work
+stopped. `timeout` cannot preempt synchronous ACS; `emit_timeout` bounds caller
+waiting and preserves observable host cleanup failure.
+
+ACS limits the full serialized snapshot to 1,048,576 bytes by default, not only
+request text. A valid near-limit request can still be refused by the full-context
+boundary before any model call. Configure advanced native limits through a
+trusted prebuilt interceptor if needed; do not weaken the host's JSON validation.
+
+The adapter does not wire the manifest's `approval` configuration into host
+authority. Supply an authenticated `resolver`; YAML `on_timeout: allow` does not
+override SDK fail-closed approval or another policy's mandatory deny.
+The pinned Cedar runtime expects a legacy envelope absent from canonical SDK
+contexts and fails closed; no metadata shim or allow fallback is added.
+
+Actual audit summaries retain the SDK's positional decisions and reasons, with
+`name=None`. This host does not register provenance names or promise unique SDK
+names. Missing point bindings deny; `agent_shutdown` is audit-only and cannot
+undo completed effects. See [coverage](docs/coverage.md#acs-policy-source).
+
 ## Known dependency release blocker
 
-The October 2, 2026 installed-environment audit reports four advisories affecting
+The October 5, 2026 installed-environment recheck reports four advisories affecting
 `chromadb==1.1.1`, a mandatory transitive dependency of the pinned CrewAI release:
 
 | Advisory | Reported issue |
@@ -30,7 +72,13 @@ The October 2, 2026 installed-environment audit reports four advisories affectin
 | [GHSA-xph7-9rjv-w5fr](https://github.com/advisories/GHSA-xph7-9rjv-w5fr) | Tenant/resource authorization scope missing |
 | [GHSA-2wm9-hf6c-p5cr](https://github.com/advisories/GHSA-2wm9-hf6c-p5cr) | Cross-tenant collection access |
 
-The audit reports no fixed version. These are **upstream dependency findings**,
+The audit and current GitHub advisories report no fixed version. PyPI's latest
+Chroma release, `1.5.9`, is still in all four affected ranges. CrewAI `1.15.23`
+requires `chromadb~=1.1.0`; forcing the newer release would violate that
+constraint without fixing the advisories. No compatible dependency-only repair
+was verified, so the versions and unsuppressed audit remain unchanged.
+
+These are **upstream dependency findings**,
 not demonstrated exploit paths through this adapter. The examples do not start
 a Chroma server and the supported profile rejects memory/knowledge integration.
 Those limits are not a vulnerability waiver: the clean dependency-audit release

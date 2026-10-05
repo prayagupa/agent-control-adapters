@@ -1,4 +1,4 @@
-"""Adapt CrewAI's response-sanitization hook: python -m examples.crewai.llm_hooks."""
+"""Adapt response sanitization: python -m examples.crewai.agent_hooks.llm_hooks."""
 
 from __future__ import annotations
 
@@ -13,7 +13,7 @@ os.environ["CREWAI_TRACING_ENABLED"] = "false"
 os.environ["CREWAI_TELEMETRY_ENABLED"] = "false"
 
 from agent_hooks import AgentContext, Decision, Transform, Verdict
-from agent_hooks_adapters import Backend, RunRequest, with_agent_hooks
+from agent_hooks_adapters import Backend, RunRequest, with_agent_controls
 from crewai import Agent, Crew, Process, Task
 from crewai.llms.providers.openai.completion import OpenAICompletion
 
@@ -81,10 +81,10 @@ def main() -> None:
         agent=agent,
     )
     crew = Crew(agents=[agent], tasks=[task], process=Process.sequential, cache=False)
-    adapter = with_agent_hooks(
+    agent_control = with_agent_controls(
         backend=Backend.CREWAI, runtime=crew, interceptors=[RedactIdentifiers()]
     )
-    result = adapter.run(RunRequest())
+    result = agent_control.run(RunRequest())
     if "[REDACTED]" not in result.output or re.search(r"\b\d{3}-\d{2}-\d{4}\b", result.output):
         raise RuntimeError("The model did not exercise the response-sanitization scenario")
     print("Sanitized answer:", json.dumps(result.output, ensure_ascii=True))

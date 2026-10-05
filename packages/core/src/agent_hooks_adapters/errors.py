@@ -11,3 +11,7 @@ class AdapterCleanupError(RuntimeError):
 
 class UnsupportedBackendError(ValueError):
     """The requested backend is not implemented or installed."""
+
+
+class ACSUnavailableError(ImportError):
+    """The optional pinned ACS runtime is missing or incompatible."""

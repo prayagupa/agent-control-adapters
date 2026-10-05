@@ -1,45 +1,18 @@
-"""Adapt CrewAI's tool-safety hook: python -m examples.crewai.tool_hooks."""
+"""Use YAML/Rego for tool safety: python -m examples.crewai.acs.tool_hooks."""
 
 from __future__ import annotations
 
 import os
-from typing import cast
+from pathlib import Path
 
-# Disable telemetry before importing CrewAI, including when this file is copied elsewhere.
 os.environ["OTEL_SDK_DISABLED"] = "true"
 os.environ["CREWAI_TRACING_ENABLED"] = "false"
 os.environ["CREWAI_TELEMETRY_ENABLED"] = "false"
 
-from agent_hooks import AgentContext, Decision, Verdict
-from agent_hooks_adapters import AdapterBlocked, Backend, RunRequest, with_agent_hooks
+from agent_hooks_adapters import AdapterBlocked, Backend, RunRequest, with_agent_controls
 from crewai import Agent, Crew, Process, Task
 from crewai.llms.providers.openai.completion import OpenAICompletion
 from crewai.tools import tool
-
-
-def json_object(value: object) -> dict[str, object]:
-    """Validate trusted tool metadata before selecting a policy decision."""
-    if not isinstance(value, dict):
-        raise ValueError("Expected a JSON object")
-    raw = cast(dict[object, object], value)
-    if any(not isinstance(key, str) for key in raw):
-        raise ValueError("Expected string JSON keys")
-    return cast(dict[str, object], raw)
-
-
-class BlockDestructiveTools:
-    """Reject destructive tools before execution, using the host-owned tool name."""
-
-    def intercept(self, context: AgentContext) -> Verdict:
-        if context["interception_point"] == "pre_tool_call":
-            name = json_object(context.get("tool_call")).get("name")
-            if not isinstance(name, str) or name in {
-                "delete_file",
-                "drop_table",
-                "system_shutdown",
-            }:
-                return Verdict.deny(reason="example:destructive_tool")
-        return Verdict(decision=Decision.ALLOW)
 
 
 @tool
@@ -49,7 +22,7 @@ def delete_file(path: str) -> str:
 
 
 def main() -> None:
-    """Let the real model request a tool, then deny it before its body executes."""
+    """Let the real model request a tool, then enforce its YAML/Rego control."""
     model = os.getenv("LOCAL_MODEL", "qwen2.5:latest")
     if ":" not in model:
         model += ":latest"
@@ -80,14 +53,16 @@ def main() -> None:
         agent=agent,
     )
     crew = Crew(agents=[agent], tasks=[task], process=Process.sequential, cache=False)
-    adapter = with_agent_hooks(
-        backend=Backend.CREWAI, runtime=crew, interceptors=[BlockDestructiveTools()]
+    agent_control = with_agent_controls(
+        backend=Backend.CREWAI,
+        runtime=crew,
+        policy_file=Path(__file__).parent / "tool_hooks.yaml",
     )
     try:
-        adapter.run(RunRequest())
+        agent_control.run(RunRequest())
     except AdapterBlocked:
         if not any(
-            record.verdict.reason == "example:destructive_tool" for record in adapter.records
+            record.verdict.reason == "example:destructive_tool" for record in agent_control.records
         ):
             raise RuntimeError("The model did not exercise the destructive-tool policy") from None
         print("Blocked: delete_file did not execute.")

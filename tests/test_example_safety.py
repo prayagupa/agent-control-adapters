@@ -18,28 +18,70 @@ from agent_hooks import (
     InterceptionPoint,
     Verdict,
 )
+from agent_hooks_adapters.acs import load_acs_policy
 from crewai.llms.providers.openai.completion import OpenAICompletion
 
-from examples.crewai import human_approval, llm_hooks, multi_agent, tool_hooks
-from examples.crewai.human_approval import ConsoleApproval
+from examples.crewai.acs import multi_agent_llm_hooks as acs_multi_agent_llm_hooks
+from examples.crewai.acs import tool_hooks as acs_tool_hooks
+from examples.crewai.agent_hooks import (
+    human_approval,
+    llm_hooks,
+    multi_agent_llm_hooks,
+    tool_hooks,
+)
+from examples.crewai.agent_hooks.human_approval import ConsoleApproval
 
 ROOT: Path = Path(__file__).resolve().parents[1]
-EXAMPLE_NAMES: tuple[str, ...] = ("llm_hooks", "tool_hooks", "human_approval", "multi_agent")
+NATIVE_EXAMPLE_NAMES: tuple[str, ...] = (
+    "agent_hooks.llm_hooks",
+    "agent_hooks.tool_hooks",
+    "agent_hooks.human_approval",
+    "agent_hooks.multi_agent_llm_hooks",
+)
+EXAMPLE_NAMES: tuple[str, ...] = (
+    *NATIVE_EXAMPLE_NAMES,
+    "acs.tool_hooks",
+    "acs.multi_agent_llm_hooks",
+)
 EXAMPLE_MAINS: tuple[Callable[[], None], ...] = (
     llm_hooks.main,
     tool_hooks.main,
     human_approval.main,
-    multi_agent.main,
+    multi_agent_llm_hooks.main,
+    acs_tool_hooks.main,
+    acs_multi_agent_llm_hooks.main,
 )
 JSON_VALIDATORS: tuple[Callable[[object], dict[str, object]], ...] = (
     llm_hooks.json_object,
     tool_hooks.json_object,
     human_approval.json_object,
-    multi_agent.json_object,
+    multi_agent_llm_hooks.json_object,
 )
 
 
-@pytest.mark.parametrize("validate_json", JSON_VALIDATORS, ids=EXAMPLE_NAMES)
+def test_examples_are_separated_by_policy_source() -> None:
+    """Keep complete examples in their policy-source folders without old copies."""
+    examples = ROOT / "examples" / "crewai"
+    assert {path.name for path in examples.glob("*.py")} == {"__init__.py"}
+    expected = {examples / Path(*name.split(".")).with_suffix(".py") for name in EXAMPLE_NAMES}
+    actual = {
+        path
+        for folder in ("agent_hooks", "acs")
+        for path in (examples / folder).glob("*.py")
+        if path.name != "__init__.py"
+    }
+    assert actual == expected
+    assert {path.parent.name for path in actual} == {"agent_hooks", "acs"}
+
+
+@pytest.fixture(autouse=True)
+def deterministic_acs_environment(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Keep unit-policy deadlines and parsing independent of ambient ACS settings."""
+    monkeypatch.delenv("ACS_OPA_TIMEOUT_MS", raising=False)
+    monkeypatch.delenv("ACS_REGO_V0", raising=False)
+
+
+@pytest.mark.parametrize("validate_json", JSON_VALIDATORS, ids=NATIVE_EXAMPLE_NAMES)
 @pytest.mark.parametrize("value", [[], None, {1: "not a string key"}])
 def test_json_object_rejects_invalid_payloads(
     value: object, validate_json: Callable[[object], dict[str, object]]
@@ -49,7 +91,7 @@ def test_json_object_rejects_invalid_payloads(
         validate_json(value)
 
 
-@pytest.mark.parametrize("validate_json", JSON_VALIDATORS, ids=EXAMPLE_NAMES)
+@pytest.mark.parametrize("validate_json", JSON_VALIDATORS, ids=NATIVE_EXAMPLE_NAMES)
 def test_json_object_preserves_valid_payloads(
     validate_json: Callable[[object], dict[str, object]],
 ) -> None:
@@ -60,11 +102,18 @@ def test_json_object_preserves_valid_payloads(
 
 @pytest.mark.parametrize(
     ("example", "max_lines"),
-    [("llm_hooks", 100), ("tool_hooks", 105), ("human_approval", 160), ("multi_agent", 150)],
+    [
+        ("agent_hooks.llm_hooks", 100),
+        ("agent_hooks.tool_hooks", 105),
+        ("agent_hooks.human_approval", 160),
+        ("agent_hooks.multi_agent_llm_hooks", 150),
+        ("acs.tool_hooks", 90),
+        ("acs.multi_agent_llm_hooks", 115),
+    ],
 )
 def test_example_source_is_simple_and_self_contained(example: str, max_lines: int) -> None:
     """Keep complete examples bounded in size and free of test-evidence machinery."""
-    text = (ROOT / "examples" / "crewai" / f"{example}.py").read_text()
+    text = (ROOT / "examples" / "crewai" / Path(*example.split(".")).with_suffix(".py")).read_text()
     assert len(text.splitlines()) <= max_lines
     tree = ast.parse(text)
     definitions = {
@@ -78,13 +127,33 @@ def test_example_source_is_simple_and_self_contained(example: str, max_lines: in
         for node in ast.walk(tree)
         if isinstance(node, ast.Call) and isinstance(node.func, ast.Name)
     }
-    assert {"OpenAICompletion", "Agent", "Crew", "with_agent_hooks", "RunRequest"} <= constructors
-    assert not {"CrewAIAdapter", "create_adapter"} & constructors
+    assert {
+        "OpenAICompletion",
+        "Agent",
+        "Crew",
+        "with_agent_controls",
+        "RunRequest",
+    } <= constructors
+    assert not {"CrewAIAdapter", "create_adapter", "with_agent_hooks"} & constructors
+    runner_names = {
+        target.id
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Assign)
+        and isinstance(node.value, ast.Call)
+        and isinstance(node.value.func, ast.Name)
+        and node.value.func.id == "with_agent_controls"
+        for target in node.targets
+        if isinstance(target, ast.Name)
+    }
+    assert runner_names == {"agent_control"}
+    if example.startswith("acs."):
+        assert "Path(__file__).parent" in text
+        assert not any(isinstance(node, ast.ClassDef) for node in tree.body)
     for node in ast.walk(tree):
         if (
             isinstance(node, ast.Call)
             and isinstance(node.func, ast.Name)
-            and node.func.id == "with_agent_hooks"
+            and node.func.id == "with_agent_controls"
         ):
             backend = next((value.value for value in node.keywords if value.arg == "backend"), None)
             assert isinstance(backend, ast.Attribute)
@@ -108,6 +177,17 @@ def test_example_source_is_simple_and_self_contained(example: str, max_lines: in
                 "examples",
                 "tests",
             }
+
+
+@pytest.mark.parametrize(
+    "filename",
+    ["tool_hooks.yaml", "shared.yaml", "researcher.yaml", "editor.yaml", "policy/controls.rego"],
+)
+def test_acs_guide_shows_every_complete_policy_asset(filename: str) -> None:
+    """Keep the documented YAML/Rego files identical to the shipped full bundle."""
+    examples = ROOT / "examples" / "crewai"
+    asset = (examples / "acs" / filename).read_text()
+    assert asset.strip() in (examples / "README.md").read_text()
 
 
 @pytest.fixture
@@ -189,7 +269,16 @@ def unit_model_requests(
 
 
 @pytest.mark.parametrize(
-    ("example", "run_example"), zip(EXAMPLE_NAMES, EXAMPLE_MAINS, strict=True), ids=EXAMPLE_NAMES
+    ("example", "run_example"),
+    [
+        pytest.param(
+            name,
+            entrypoint,
+            marks=pytest.mark.acs if name.startswith("acs.") else (),
+        )
+        for name, entrypoint in zip(EXAMPLE_NAMES, EXAMPLE_MAINS, strict=True)
+    ],
+    ids=EXAMPLE_NAMES,
 )
 @pytest.mark.parametrize(
     ("model_env", "expected_model"),
@@ -216,9 +305,11 @@ def test_example_uses_native_llm_and_preserves_governance(
     monkeypatch.setenv("LOCAL_MODEL_BASE_URL", "https://remote.invalid/v1")
     with (
         patch(f"examples.crewai.{example}.OpenAICompletion", wraps=OpenAICompletion) as factory,
-        patch("examples.crewai.human_approval.select.select", return_value=([0], [], [])),
-        patch("examples.crewai.human_approval.sys.stdin") as stream,
-        patch("examples.crewai.human_approval.os.read", return_value=b"approve\n"),
+        patch(
+            "examples.crewai.agent_hooks.human_approval.select.select", return_value=([0], [], [])
+        ),
+        patch("examples.crewai.agent_hooks.human_approval.sys.stdin") as stream,
+        patch("examples.crewai.agent_hooks.human_approval.os.read", return_value=b"approve\n"),
     ):
         stream.fileno.return_value = 0
         run_example()
@@ -232,26 +323,39 @@ def test_example_uses_native_llm_and_preserves_governance(
         timeout=60,
         max_retries=0,
     )
-    assert len(unit_model_requests) == (2 if example in {"multi_agent", "human_approval"} else 1)
+    assert len(unit_model_requests) == (
+        2
+        if example
+        in {
+            "agent_hooks.multi_agent_llm_hooks",
+            "acs.multi_agent_llm_hooks",
+            "agent_hooks.human_approval",
+        }
+        else 1
+    )
     for request in unit_model_requests:
         parameters = human_approval.json_object(json.loads(request.content))
         assert parameters["model"] == expected_model
         assert parameters["temperature"] == 0
         assert parameters["max_tokens"] == 256
-        assert bool(parameters.get("tools")) is (example in {"tool_hooks", "human_approval"})
+        assert bool(parameters.get("tools")) is (
+            example in {"agent_hooks.tool_hooks", "acs.tool_hooks", "agent_hooks.human_approval"}
+        )
     output = capsys.readouterr().out
-    if example == "tool_hooks":
+    if example in {"agent_hooks.tool_hooks", "acs.tool_hooks"}:
         assert "Blocked: delete_file did not execute." in output
         assert "Synthetic unit-test response." not in output
     else:
         assert "Synthetic unit-test response." in output
-        if example == "human_approval":
+        if example == "agent_hooks.human_approval":
             assert "Approved preview (not sent):" in output
             assert "Answer after approval:" in output
-        elif example == "llm_hooks":
+        elif example == "agent_hooks.llm_hooks":
             assert "[REDACTED]" in output and "000-00-0000" not in output
-        elif example == "multi_agent":
+        elif example == "agent_hooks.multi_agent_llm_hooks":
             assert "Per-agent policies stayed isolated." in output
+        elif example == "acs.multi_agent_llm_hooks":
+            assert "Per-agent YAML policies stayed isolated." in output
 
 
 @pytest.mark.parametrize(
@@ -265,10 +369,62 @@ def test_agent_text_limit_enforces_exact_boundary(limit: int, size: int, denied:
     ).post_model_call(
         model_id="synthetic-unit-test", content="x" * size, tool_calls=[], finish_reason="stop"
     )
-    policy = multi_agent.AgentTextLimit(max_characters=limit)
+    policy = multi_agent_llm_hooks.AgentTextLimit(max_characters=limit)
     verdict = policy.intercept(context)
     assert (verdict.decision.value == "deny") is denied
     assert policy.seen_agent_ids == {"unit-test"}
+
+
+@pytest.mark.acs
+@pytest.mark.parametrize(("filename", "limit"), [("editor.yaml", 800), ("researcher.yaml", 1600)])
+@pytest.mark.parametrize("extra", [0, 1])
+def test_yaml_example_text_limits_use_real_rego(filename: str, limit: int, extra: int) -> None:
+    """Exercise the shipped bundle's inclusive Unicode-character thresholds."""
+    context = AgentContextBuilder(
+        agent_id="unit-test", framework="crewai", session_id="unit-test"
+    ).post_model_call(
+        model_id="synthetic-unit-test",
+        content="\u754c" * (limit + extra),
+        tool_calls=[],
+        finish_reason="stop",
+    )
+    policy = load_acs_policy(ROOT / "examples" / "crewai" / "acs" / filename)
+    verdict = policy.intercept(context)
+    assert isinstance(verdict, Verdict)
+    assert (verdict.decision.value == "deny") is (extra == 1)
+
+
+@pytest.mark.acs
+@pytest.mark.parametrize("content", [None, 1, [], {}])
+def test_yaml_example_rejects_non_text_content(content: object) -> None:
+    context = AgentContextBuilder(
+        agent_id="unit-test", framework="crewai", session_id="unit-test"
+    ).post_model_call(
+        model_id="synthetic-unit-test", content=content, tool_calls=[], finish_reason="stop"
+    )
+    policy = load_acs_policy(ROOT / "examples" / "crewai" / "acs" / "editor.yaml")
+    verdict = policy.intercept(context)
+    assert isinstance(verdict, Verdict)
+    assert verdict.decision.value == "deny"
+    assert verdict.reason == "example:text_limit"
+
+
+@pytest.mark.acs
+@pytest.mark.parametrize(
+    ("name", "denied"),
+    [("delete_file", True), ("drop_table", True), ("system_shutdown", True), ("web_search", False)],
+)
+def test_yaml_example_uses_trusted_tool_name(name: str, denied: bool) -> None:
+    context = AgentContextBuilder(
+        agent_id="unit-test", framework="crewai", session_id="unit-test"
+    ).pre_tool_call(
+        call_id="unit-test-call", name=name, args={"name": "web_search", "path": "demo.txt"}
+    )
+    policy = load_acs_policy(ROOT / "examples" / "crewai" / "acs" / "tool_hooks.yaml")
+    verdict = policy.intercept(context)
+    assert isinstance(verdict, Verdict)
+    assert (verdict.decision.value == "deny") is denied
+    assert verdict.reason == ("example:destructive_tool" if denied else None)
 
 
 @pytest.mark.parametrize(
@@ -301,9 +457,11 @@ def test_console_requires_explicit_complete_approval_and_echoes_identity(
         context=context,
     )
     with (
-        patch("examples.crewai.human_approval.select.select", return_value=([0], [], [])),
-        patch("examples.crewai.human_approval.sys.stdin") as stream,
-        patch("examples.crewai.human_approval.os.read", return_value=reply),
+        patch(
+            "examples.crewai.agent_hooks.human_approval.select.select", return_value=([0], [], [])
+        ),
+        patch("examples.crewai.agent_hooks.human_approval.sys.stdin") as stream,
+        patch("examples.crewai.agent_hooks.human_approval.os.read", return_value=reply),
     ):
         stream.fileno.return_value = 0
         result = ConsoleApproval().resolve(request)
@@ -328,8 +486,10 @@ def test_console_timeout_rejects_without_reading() -> None:
         context=context,
     )
     with (
-        patch("examples.crewai.human_approval.select.select", return_value=([], [], [])),
-        patch("examples.crewai.human_approval.os.read") as read,
+        patch(
+            "examples.crewai.agent_hooks.human_approval.select.select", return_value=([], [], [])
+        ),
+        patch("examples.crewai.agent_hooks.human_approval.os.read") as read,
     ):
         result = ConsoleApproval().resolve(request)
     assert result.outcome is ApprovalOutcome.REJECT
@@ -397,9 +557,11 @@ def test_rejected_tool_example_never_runs_its_body(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     with (
-        patch("examples.crewai.human_approval.select.select", return_value=([0], [], [])),
-        patch("examples.crewai.human_approval.sys.stdin") as stream,
-        patch("examples.crewai.human_approval.os.read", return_value=reply),
+        patch(
+            "examples.crewai.agent_hooks.human_approval.select.select", return_value=([0], [], [])
+        ),
+        patch("examples.crewai.agent_hooks.human_approval.sys.stdin") as stream,
+        patch("examples.crewai.agent_hooks.human_approval.os.read", return_value=reply),
     ):
         stream.fileno.return_value = 0
         human_approval.main()

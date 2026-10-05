@@ -5,11 +5,16 @@ from __future__ import annotations
 import subprocess
 import sys
 from dataclasses import FrozenInstanceError
+from importlib.metadata import PackageNotFoundError
+from pathlib import Path
 from textwrap import dedent
+from types import ModuleType
 
+import agent_hooks_adapters.acs as acs
 import pytest
 from agent_hooks import ALLOW, AgentContext, InterceptionRecord, Verdict
 from agent_hooks_adapters import (
+    ACSUnavailableError,
     Adapter,
     AdapterBlocked,
     AdapterCleanupError,
@@ -19,6 +24,7 @@ from agent_hooks_adapters import (
     RunResult,
     UnsupportedBackendError,
     create_adapter,
+    with_agent_controls,
     with_agent_hooks,
 )
 
@@ -253,7 +259,108 @@ def test_backend_enum_contains_only_the_implemented_backend() -> None:
 
 
 def test_original_factory_name_is_a_compatible_alias() -> None:
-    assert create_adapter is with_agent_hooks
+    assert create_adapter is with_agent_hooks is with_agent_controls
+
+
+def test_acs_unavailable_error_has_an_explicit_import_base() -> None:
+    assert issubclass(ACSUnavailableError, ImportError)
+
+
+def test_agent_policy_owns_a_manifest_path_without_loading_it(tmp_path: Path) -> None:
+    path = tmp_path / "missing.yaml"
+    policy = AgentPolicy("reviewer", policy_file=path)
+    assert policy.interceptors == ()
+    assert policy.policy_file == path.absolute()
+    assert not path.exists()
+    for field in ("agent_id", "interceptors", "policy_file"):
+        with pytest.raises(FrozenInstanceError):
+            setattr(policy, field, None)
+
+
+@pytest.mark.parametrize("value", ["", "\x00", "invalid\x00.yaml"])
+def test_agent_policy_rejects_invalid_manifest_paths(value: str) -> None:
+    with pytest.raises(ValueError, match="path"):
+        AgentPolicy("reviewer", policy_file=value)
+
+
+@pytest.mark.parametrize("value", [False, 1, b"policy.yaml", object()])
+def test_agent_policy_rejects_non_path_manifest_sources(value: object) -> None:
+    with pytest.raises(TypeError, match="policy_file"):
+        AgentPolicy("reviewer", policy_file=value)  # pyright: ignore[reportArgumentType]
+
+
+def test_agent_policy_rejects_both_sources(tmp_path: Path) -> None:
+    with pytest.raises(ValueError, match="either"):
+        AgentPolicy("reviewer", (AllowPolicy(),), policy_file=tmp_path / "policy.yaml")
+
+
+def test_policy_path_preserves_lexical_resolution(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    policy = AgentPolicy("reviewer", policy_file="nested/../policy.yaml")
+    assert policy.policy_file == tmp_path / "nested" / ".." / "policy.yaml"
+
+
+@pytest.mark.parametrize("interceptors", [None, [], [AllowPolicy()]])
+def test_factory_rejects_missing_or_conflicting_shared_sources(
+    interceptors: list[AllowPolicy] | None, tmp_path: Path
+) -> None:
+    with pytest.raises(ValueError, match="exactly one"):
+        with_agent_controls(
+            backend=Backend.CREWAI,
+            runtime=object(),
+            interceptors=interceptors,
+            policy_file=tmp_path / "policy.yaml" if interceptors is not None else None,
+        )
+
+
+def test_missing_acs_distribution_is_actionable(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    def missing(name: str) -> str:
+        raise PackageNotFoundError(name)
+
+    monkeypatch.setattr(acs, "version", missing)
+    with pytest.raises(ACSUnavailableError, match=r"agent-hooks-adapters\[acs\]") as caught:
+        acs.load_acs_policy(tmp_path / "policy.yaml")
+    assert isinstance(caught.value.__cause__, PackageNotFoundError)
+
+
+def test_incompatible_acs_version_fails_before_import(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    def no_import(name: str) -> ModuleType:
+        raise AssertionError("An incompatible SDK must not be imported")
+
+    def incompatible(name: str) -> str:
+        return "0.4.0a3"
+
+    monkeypatch.setattr(acs, "version", incompatible)
+    monkeypatch.setattr(acs, "import_module", no_import)
+    with pytest.raises(ACSUnavailableError, match=r"0\.4\.0a4"):
+        acs.load_acs_policy(tmp_path / "policy.yaml")
+
+
+@pytest.mark.parametrize("missing_name", ["agent_control_spec", "agent_control_spec._native"])
+def test_optional_import_does_not_hide_nested_failures(
+    missing_name: str, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    def missing(name: str) -> ModuleType:
+        raise ModuleNotFoundError("missing native SDK", name=missing_name)
+
+    def compatible(name: str) -> str:
+        return acs.ACS_VERSION
+
+    monkeypatch.setattr(acs, "version", compatible)
+    monkeypatch.setattr(acs, "import_module", missing)
+    if missing_name == "agent_control_spec":
+        with pytest.raises(ACSUnavailableError, match=r"\[acs\]"):
+            acs.load_acs_policy(tmp_path / "policy.yaml")
+    else:
+        with pytest.raises(ModuleNotFoundError) as caught:
+            acs.load_acs_policy(tmp_path / "policy.yaml")
+        assert caught.value.name == missing_name
 
 
 @pytest.mark.parametrize("value", ["", "CrewAI", "langchain", "openai", "unknown"])
@@ -280,14 +387,17 @@ def test_core_contracts_and_unsupported_factory_do_not_import_crewai() -> None:
 
         class BlockNativeBackend(MetaPathFinder):
             def find_spec(self, fullname, path=None, target=None):
-                if fullname.split(".", 1)[0] in {"crewai", "agent_hooks_crewai"}:
+                if fullname.split(".", 1)[0] in {
+                    "crewai", "agent_hooks_crewai", "agent_control_spec",
+                }:
                     raise AssertionError("core imported a native backend: " + fullname)
                 return None
 
         sys.meta_path.insert(0, BlockNativeBackend())
         from agent_hooks import ALLOW
         from agent_hooks_adapters import (
-            AgentPolicy, Backend, RunRequest, RunResult, UnsupportedBackendError, create_adapter,
+            AgentPolicy, Backend, RunRequest, RunResult, UnsupportedBackendError,
+            create_adapter, with_agent_controls, with_agent_hooks,
         )
 
         class Allow:
@@ -298,6 +408,8 @@ def test_core_contracts_and_unsupported_factory_do_not_import_crewai() -> None:
         assert request.inputs == {"value": [True, None, 1]}
         assert RunResult(output="completed", records=(), records_dropped=0).output == "completed"
         assert AgentPolicy(agent_id="reviewer", interceptors=(Allow(),)).agent_id == "reviewer"
+        assert AgentPolicy("reviewer", policy_file="missing.yaml").interceptors == ()
+        assert create_adapter is with_agent_hooks is with_agent_controls
         assert Backend("crewai") is Backend.CREWAI
         for backend in ("crewai", "unknown"):
             try:
@@ -307,7 +419,8 @@ def test_core_contracts_and_unsupported_factory_do_not_import_crewai() -> None:
             else:
                 raise AssertionError("non-enum backend was accepted")
         assert not any(
-            name.split(".", 1)[0] in {"crewai", "agent_hooks_crewai"} for name in sys.modules
+            name.split(".", 1)[0] in {"crewai", "agent_hooks_crewai", "agent_control_spec"}
+            for name in sys.modules
         )
         print("core-only contracts verified")
         """

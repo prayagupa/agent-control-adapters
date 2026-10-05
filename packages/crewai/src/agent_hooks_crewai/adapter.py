@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import logging
-import math
 import threading
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
@@ -28,6 +27,7 @@ from crewai.hooks.llm_hooks import LLMCallHookContext
 from crewai.hooks.tool_hooks import ToolCallHookContext
 from crewai.utilities.types import LLMMessage
 
+from ._config import validate_run_options
 from ._json import JSON, envelope, messages_value, normalize, object_value, text_value
 from ._worker import Binding, ContextFactory, Worker
 from .errors import AdapterBlocked, AdapterCleanupError
@@ -91,11 +91,7 @@ class CrewAIAdapter:
     ) -> None:
         if not isinstance(cast("object", crew), Crew):
             raise TypeError("crew must be a Crew")
-        for duration in (timeout, emit_timeout):
-            if isinstance(duration, bool) or not math.isfinite(duration) or duration <= 0:
-                raise ValueError("Timeouts must be positive finite seconds")
-        if type(max_records) is not int or not 1 <= max_records <= 100_000:
-            raise ValueError("max_records must be between 1 and 100000")
+        validate_run_options(timeout, emit_timeout, max_records)
         self._crew = crew
         self._run_id = str(uuid4())
         self._trace_id = self._run_id.replace("-", "")

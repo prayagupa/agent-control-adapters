@@ -1,0 +1,17 @@
+agent_control_specification_version: "0.5.0-alpha.1"
+policies:
+  destructive_tools:
+    type: rego
+    bundle: "./policy"
+    query: data.controls.tool_guard
+intervention_points:
+  agent_startup: &check
+    policy_target: "$snap.target"
+    policy: {id: destructive_tools}
+  input: *check
+  pre_model_call: *check
+  post_model_call: *check
+  pre_tool_call: *check
+  post_tool_call: *check
+  output: *check
+  agent_shutdown: *check

@@ -3,13 +3,16 @@
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
+from pathlib import Path
 from typing import cast
 
 from agent_hooks import ApprovalResolver, Interceptor
 from agent_hooks_adapters import AgentPolicy
+from agent_hooks_adapters.acs import load_acs_policy
 from agent_hooks_adapters.contracts import validate_agent_id
 from crewai import Agent, Crew
 
+from ._config import validate_run_options
 from .adapter import AgentPolicy as NativeAgentPolicy
 from .adapter import CrewAIAdapter
 
@@ -17,7 +20,8 @@ from .adapter import CrewAIAdapter
 def create_backend(
     runtime: object,
     *,
-    interceptors: Sequence[Interceptor],
+    interceptors: Sequence[Interceptor] | None = None,
+    policy_file: str | Path | None = None,
     agents: Mapping[str, object] | None = None,
     agent_policies: Sequence[AgentPolicy] = (),
     resolver: ApprovalResolver | None = None,
@@ -28,6 +32,9 @@ def create_backend(
     """Validate trusted aliases and freeze controls without changing native identities."""
     if not isinstance(runtime, Crew):
         raise TypeError("The CrewAI backend requires a Crew runtime")
+    if (interceptors is None) == (policy_file is None):
+        raise ValueError("Provide exactly one of interceptors or policy_file")
+    validate_run_options(timeout, emit_timeout, max_records)
     if agents is not None and not isinstance(cast("object", agents), Mapping):
         raise TypeError("agents must be a mapping of application IDs to native agents")
     bindings: dict[str, Agent] = {}
@@ -40,7 +47,7 @@ def create_backend(
         if any(native_agent is member for member in bindings.values()):
             raise ValueError("Each native agent must have one application binding")
         bindings[agent_id] = native_agent
-    policies: list[NativeAgentPolicy] = []
+    assignments: list[tuple[Agent, AgentPolicy]] = []
     seen: set[str] = set()
     for policy in tuple(agent_policies):
         if not isinstance(cast("object", policy), AgentPolicy):
@@ -51,10 +58,26 @@ def create_backend(
         if policy.agent_id in seen:
             raise ValueError("Each application agent must have one policy assignment")
         seen.add(policy.agent_id)
-        policies.append(NativeAgentPolicy(native_agent, policy.interceptors))
+        assignments.append((native_agent, policy))
+    shared = (
+        (load_acs_policy(policy_file),)
+        if policy_file is not None
+        else tuple(interceptors)
+        if interceptors is not None
+        else ()
+    )
+    policies = [
+        NativeAgentPolicy(
+            agent,
+            (load_acs_policy(policy.policy_file),)
+            if policy.policy_file is not None
+            else policy.interceptors,
+        )
+        for agent, policy in assignments
+    ]
     return CrewAIAdapter(
         runtime,
-        interceptors=tuple(interceptors),
+        interceptors=shared,
         agent_policies=tuple(policies),
         resolver=resolver,
         timeout=timeout,

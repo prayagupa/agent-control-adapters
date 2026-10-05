@@ -8,7 +8,8 @@ remove that dependency for applications installing this adapter.
 
 ## Supported profile
 
-Call `with_agent_hooks(...).run(...)` on a synchronous, sequential crew.
+Call `with_agent_controls(...).run(...)` on a synchronous, sequential crew.
+`with_agent_hooks` and `create_adapter` are exact compatibility aliases.
 The legacy `CrewAIAdapter.kickoff()` entry point remains supported. Policies and
 approval resolvers are trusted application code. Shared interceptors apply to
 crew boundaries; shared plus agent-bound interceptors apply to model/tool
@@ -27,6 +28,56 @@ not at the tool's actual side effects.
 | Shutdown | Audit-only; cannot undo effects | No action-changing guarantee |
 
 The adapter deliberately does **not** register `PRE_STEP` or `POST_STEP`.
+
+## ACS policy source
+
+Install the optional `[crewai,acs]` extra (or development `acs` group) and use
+`policy_file` instead of `interceptors`. The pinned runtime is
+`agent-control-spec==0.4.0a4`, using SDK 0.1.0a5. It accepts the native
+0.4.0-alpha.1 and 0.5.0-alpha.1 manifest contracts. Tested controls use real
+Rego bundles and canonical top-level SDK `agent`, `session`, `target` and
+`tool_call` fields; the host does not translate metadata or implement a DSL.
+
+Native and file-backed per-agent policies can be mixed. Shared YAML should bind
+`agent_startup`, `input`, `pre_model_call`, `post_model_call`, `pre_tool_call`,
+`post_tool_call`, `output` and `agent_shutdown`. Agent files need only the four
+model/tool points. Missing bindings return native denial, not an implicit permit.
+Shutdown denial is retained in actual records but cannot retroactively block an
+otherwise allowed result.
+
+| ACS behavior | Adapter outcome / limitation |
+|---|---|
+| Missing/invalid manifest | Native `ValueError` before run; builder `RuntimeError` stays visible |
+| Missing/broken Rego bundle | Construction can succeed; denial at its first bound evaluation |
+| Shared bundle first bound at startup | Tested denial before any model/tool call |
+| Healthy startup, broken tool bundle | Tested denial after one model request, before the tool body |
+| Broken later-agent bundle | Tested denial after an earlier agent's model request; no rollback |
+| Transforms and approvals | Existing SDK validation/write-back/resolver; shared mandatory deny wins |
+| YAML `approval` configuration | Not wired as host authority; provide the explicit `resolver` |
+| Cedar | Released engine expects `snapshot.envelope.agent.id`; canonical contexts fail closed |
+| Full snapshot budget | Default 1,048,576 serialized bytes, distinct from request-content bounds |
+| Runtime deadlines | Rego default 5,000 ms; ambient `ACS_OPA_TIMEOUT_MS`/`ACS_REGO_V0` affect behavior |
+| Native work after timeout | Not forcibly killed; two pools allow 32 abandoned workers each plus concurrency |
+| Native fatal errors | Allocation/parser failures may abort the process, not produce an audit denial |
+| Network and credentials | Trusted inheritance/annotators can access network and named host environment secrets |
+| Audit names | Actual SDK summaries keep `name=None`; no fabricated provider labels |
+
+Boundary probes allowed an exactly 1,048,576-byte native snapshot and denied a
+1,048,580-byte one with `runtime_error:resource_limit_exceeded`. A valid request
+at the host's 1-MiB input-text budget was blocked before any model call because
+its complete context contains copies of the input; host refusal did not invent
+an input SDK record. Tests also bracket the actual native threshold.
+
+Keep manifests and referenced policy directories immutable throughout a run.
+No hot reload, artifact snapshot or eager Rego readiness guarantee is supplied.
+Use the native `ActivatedPolicy` API separately for deployment preflight, with
+its deadline caveats, or a trusted prebuilt `AcsInterceptor` through
+`interceptors=` for custom limits/cache reuse.
+
+ACS 0.4.0a4 provides a Linux x86_64 wheel requiring glibc >=2.34; other platforms
+need a source build/toolchain. See [contributing](../CONTRIBUTING.md) and
+[security](../SECURITY.md#acs-configuration-is-trusted-code). ACS is optional:
+the native-only source path imports no ACS module.
 
 ## Not covered or deliberately rejected
 

@@ -1,10 +1,16 @@
-"""Portable execution API with framework-specific backends and shared SDK policies."""
+"""Portable execution API for native Agent Hooks policies and ACS manifests."""
 
 from .contracts import Adapter, AgentPolicy, Backend, RunRequest, RunResult
-from .errors import AdapterBlocked, AdapterCleanupError, UnsupportedBackendError
-from .factory import create_adapter, with_agent_hooks
+from .errors import (
+    ACSUnavailableError,
+    AdapterBlocked,
+    AdapterCleanupError,
+    UnsupportedBackendError,
+)
+from .factory import create_adapter, with_agent_controls, with_agent_hooks
 
 __all__ = [
+    "ACSUnavailableError",
     "Adapter",
     "AdapterBlocked",
     "AdapterCleanupError",
@@ -14,5 +20,6 @@ __all__ = [
     "RunResult",
     "UnsupportedBackendError",
     "create_adapter",
+    "with_agent_controls",
     "with_agent_hooks",
 ]

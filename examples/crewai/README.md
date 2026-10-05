@@ -1,4 +1,4 @@
-# CrewAI hook examples using agent-hooks
+# CrewAI controls using Python interceptors or ACS YAML/Rego
 
 These are complete, standalone replacements for CrewAI's official
 [execution-hook](https://docs.crewai.com/v1.15.23/en/learn/execution-hooks),
@@ -20,33 +20,39 @@ examples.
 
 | Complete example | What it demonstrates |
 |---|---|
-| [llm_hooks.py](llm_hooks.py) | Replace the native response-sanitization hook with an SDK transform |
-| [tool_hooks.py](tool_hooks.py) | Replace the native destructive-tool hook with an SDK denial |
-| [human_approval.py](human_approval.py) | Replace the native pre-tool approval gate with an SDK approval resolver |
-| [multi_agent.py](multi_agent.py) | Replace role-name filtering with trusted per-agent policy bindings |
+| [agent_hooks/llm_hooks.py](agent_hooks/llm_hooks.py) | Replace the native response-sanitization hook with an SDK transform |
+| [agent_hooks/tool_hooks.py](agent_hooks/tool_hooks.py) | Replace the native destructive-tool hook with an SDK denial |
+| [agent_hooks/human_approval.py](agent_hooks/human_approval.py) | Replace the native pre-tool approval gate with an SDK approval resolver |
+| [agent_hooks/multi_agent_llm_hooks.py](agent_hooks/multi_agent_llm_hooks.py) | Enforce separate LLM response limits using trusted per-agent policy bindings |
+| [acs/tool_hooks.py](acs/tool_hooks.py) | The same destructive-tool control, configured with native ACS YAML/Rego |
+| [acs/multi_agent_llm_hooks.py](acs/multi_agent_llm_hooks.py) | Shared YAML and separate researcher/editor LLM response limits |
+
+Native Python policies live in `agent_hooks/`. ACS applications, YAML manifests
+and the Rego bundle live together in `acs/`. Both use an `agent_control` runner
+returned by `with_agent_controls`.
 
 ## Minimal customer change
 
 Keep your existing native workflow. Replace the native hook function with a
 small `intercept(context) -> Verdict` policy, import `Backend`, `RunRequest`
-and `with_agent_hooks` from `agent_hooks_adapters`, and change the execution
+and `with_agent_controls` from `agent_hooks_adapters`, and change the execution
 call. Given an existing `crew`, input dictionary and policy, the migration is:
 
 ```diff
 - result = crew.kickoff(inputs=inputs)
-+ governed = with_agent_hooks(
++ agent_control = with_agent_controls(
 +     backend=Backend.CREWAI, runtime=crew, interceptors=[policy]
 + )
-+ result = governed.run(RunRequest(inputs=inputs))
++ result = agent_control.run(RunRequest(inputs=inputs))
 - print(result.raw)
 + print(result.output)
 ```
 
-This is a migration diff, not another incomplete example; the four linked files
+This is a migration diff, not another incomplete example; the six linked files
 contain all runnable code. Do not register the old native hook and its replacement
 policy together. The wrapper returns a governed runner; it does not modify the
-crew so that a later direct `crew.kickoff()` becomes governed. `create_adapter`
-remains a compatible alias.
+crew so that a later direct `crew.kickoff()` becomes governed. `with_agent_hooks`
+and `create_adapter` remain exact compatibility aliases.
 
 The supported alpha profile still requires synchronous sequential execution,
 `respect_context_window=False`, and enough iterations for the task (`max_iter=3`
@@ -55,27 +61,36 @@ disabled; see [coverage](../../docs/coverage.md).
 
 ## Run the complete examples
 
-Run from the **repository root**, after `uv sync --group dev`.
+Run from the **repository root**, after `uv sync --locked --group dev`.
+For the two ACS examples use `uv sync --locked --group dev --group acs` instead.
 Use an already installed/running Ollama with `qwen2.5:latest`:
 
 ```bash
 curl --fail http://localhost:11434/api/tags
-uv run --no-sync python -m examples.crewai.llm_hooks
-uv run --no-sync python -m examples.crewai.tool_hooks
-uv run --no-sync python -m examples.crewai.human_approval
-uv run --no-sync python -m examples.crewai.multi_agent
+uv run --no-sync python -m examples.crewai.agent_hooks.llm_hooks
+uv run --no-sync python -m examples.crewai.agent_hooks.tool_hooks
+uv run --no-sync python -m examples.crewai.agent_hooks.human_approval
+uv run --no-sync python -m examples.crewai.agent_hooks.multi_agent_llm_hooks
+uv run --no-sync python -m examples.crewai.acs.tool_hooks
+uv run --no-sync python -m examples.crewai.acs.multi_agent_llm_hooks
 ```
 
 You can also run any file directly, for example:
 
 ```bash
-uv run --no-sync python examples/crewai/llm_hooks.py
+uv run --no-sync python examples/crewai/agent_hooks/llm_hooks.py
 ```
 
 A copied file can run outside this repository using the same provisioned Python
 environment. It still requires the installed adapter, CrewAI and its native
 OpenAI-provider dependencies, and the already running local model; "standalone" does not
 mean dependency-free.
+For an ACS example, copy the **entire `acs/` folder**, including its scripts,
+manifests and `policy/` bundle. Each script locates its sibling manifests with
+`Path(__file__).parent`, not the working directory. Install the optional
+`[crewai,acs]` distribution extras when
+using locally built packages outside the workspace; ACS is not needed for the
+four Python-policy files.
 
 No downloads or remote fallback occur. The endpoint is deliberately fixed to
 `http://localhost:11434/v1`; these examples no longer read `LOCAL_MODEL_BASE_URL`.
@@ -86,12 +101,211 @@ Agents explicitly disable automatic context summarization and use `max_iter=3`.
 The adapter reserves the last iteration to prevent an unhooked forced-final
 model call; these short tasks ordinarily finish after one governed request.
 
-The governance portion is `with_agent_hooks(backend=Backend.CREWAI, runtime=crew, ...)`
-followed by `adapter.run(RunRequest(...))`. Successful runs expose `result.output`
+The governance portion is `with_agent_controls(backend=Backend.CREWAI, runtime=crew, ...)`
+followed by `agent_control.run(RunRequest(...))`. Successful runs expose `result.output`
 and actual SDK audit records. Denials raise the common `AdapterBlocked` error.
 The multi-agent example assigns policies to the stable application labels
 `researcher` and `editor`, with an explicit trusted mapping to the actual agents.
 Native SDK context IDs remain unchanged.
+
+## ACS YAML/Rego controls
+
+The full Python applications are in [acs/tool_hooks.py](acs/tool_hooks.py) and
+[acs/multi_agent_llm_hooks.py](acs/multi_agent_llm_hooks.py). They retain the same native model,
+agents, tasks and execution call as their Python-policy counterparts. The policy
+source switch is just:
+
+```diff
+- interceptors=[python_policy],
++ policy_file=controls / "tool_hooks.yaml",
+```
+
+For an agent:
+
+```diff
+- AgentPolicy("researcher", (researcher_policy,)),
++ AgentPolicy("researcher", policy_file=controls / "researcher.yaml"),
+```
+
+Exactly one source is required per assignment. You can mix a native shared
+policy with agent YAML, or shared YAML with native agent policies. There is no
+second CrewAI hook mapper, worker, or policy evaluator: the published ACS
+interceptor runs through the existing SDK contract.
+
+Every external policy file is included here; none contains a scripted `test`
+verdict or a canned model answer:
+
+```text
+acs/
+  tool_hooks.py             Complete destructive-tool example
+  multi_agent_llm_hooks.py   Complete researcher/editor LLM-hook example
+  tool_hooks.yaml           Shared destructive-tool policy; binds all eight points
+  shared.yaml               Shared no-tools policy for the two text-only agents
+  researcher.yaml           Agent-only 1,600-character response limit
+  editor.yaml               Agent-only 800-character response limit
+  policy/
+    controls.rego           Actual Rego code used by the manifests
+```
+
+Complete [tool manifest](acs/tool_hooks.yaml):
+
+```yaml
+agent_control_specification_version: "0.5.0-alpha.1"
+policies:
+  destructive_tools:
+    type: rego
+    bundle: "./policy"
+    query: data.controls.tool_guard
+intervention_points:
+  agent_startup: &check
+    policy_target: "$snap.target"
+    policy: {id: destructive_tools}
+  input: *check
+  pre_model_call: *check
+  post_model_call: *check
+  pre_tool_call: *check
+  post_tool_call: *check
+  output: *check
+  agent_shutdown: *check
+```
+
+Complete [shared multi-agent manifest](acs/shared.yaml):
+
+```yaml
+agent_control_specification_version: "0.5.0-alpha.1"
+policies:
+  no_tools:
+    type: rego
+    bundle: "./policy"
+    query: data.controls.no_tools
+intervention_points:
+  agent_startup: &check
+    policy_target: "$snap.target"
+    policy: {id: no_tools}
+  input: *check
+  pre_model_call: *check
+  post_model_call: *check
+  pre_tool_call: *check
+  post_tool_call: *check
+  output: *check
+  agent_shutdown: *check
+```
+
+Complete [researcher manifest](acs/researcher.yaml):
+
+```yaml
+agent_control_specification_version: "0.5.0-alpha.1"
+policies:
+  researcher_text_limit:
+    type: rego
+    bundle: "./policy"
+    query: data.controls.researcher_limit
+intervention_points:
+  pre_model_call: &check
+    policy_target: "$snap.target"
+    policy: {id: researcher_text_limit}
+  post_model_call: *check
+  pre_tool_call: *check
+  post_tool_call: *check
+```
+
+Complete [editor manifest](acs/editor.yaml):
+
+```yaml
+agent_control_specification_version: "0.5.0-alpha.1"
+policies:
+  editor_text_limit:
+    type: rego
+    bundle: "./policy"
+    query: data.controls.editor_limit
+intervention_points:
+  pre_model_call: &check
+    policy_target: "$snap.target"
+    policy: {id: editor_text_limit}
+  post_model_call: *check
+  pre_tool_call: *check
+  post_tool_call: *check
+```
+
+Complete [Rego bundle](acs/policy/controls.rego):
+
+```rego
+package controls
+
+import rego.v1
+
+default tool_guard := {"decision": "allow"}
+
+tool_guard := {"decision": "deny", "reason": "example:destructive_tool"} if {
+    input.snapshot.interception_point == "pre_tool_call"
+    not is_string(input.snapshot.tool_call.name)
+}
+
+tool_guard := {"decision": "deny", "reason": "example:destructive_tool"} if {
+    input.snapshot.interception_point == "pre_tool_call"
+    input.snapshot.tool_call.name in {"delete_file", "drop_table", "system_shutdown"}
+}
+
+default no_tools := {"decision": "allow"}
+
+no_tools := {"decision": "deny", "reason": "example:no_tools"} if {
+    input.snapshot.interception_point == "pre_tool_call"
+}
+
+within_limit(limit) if {
+    input.snapshot.interception_point == "post_model_call"
+    is_string(input.snapshot.target.content)
+    count(input.snapshot.target.content) <= limit
+}
+
+exceeds_limit(limit) if {
+    input.snapshot.interception_point == "post_model_call"
+    not is_string(input.snapshot.target.content)
+}
+
+exceeds_limit(limit) if {
+    input.snapshot.interception_point == "post_model_call"
+    count(input.snapshot.target.content) > limit
+}
+
+default researcher_limit := {"decision": "allow"}
+
+researcher_limit := {"decision": "allow", "reason": "example:researcher_text_limit"} if {
+    within_limit(1600)
+}
+
+researcher_limit := {"decision": "deny", "reason": "example:text_limit"} if {
+    exceeds_limit(1600)
+}
+
+default editor_limit := {"decision": "allow"}
+
+editor_limit := {"decision": "allow", "reason": "example:editor_text_limit"} if {
+    within_limit(800)
+}
+
+editor_limit := {"decision": "deny", "reason": "example:text_limit"} if {
+    exceeds_limit(800)
+}
+```
+
+The model-generated answers are not replaced by these controls. The multi-agent
+file checks actual per-policy reasons on disjoint SDK sessions; summary names
+remain `None`, not invented source labels. Tool authorization reads the
+host-owned `snapshot.tool_call.name`, never a forged `name` argument.
+Use canonical `snapshot.target.content` for response text rather than assuming
+ACS's policy-input `target` has the same shape.
+
+Shared YAML binds all eight points. Agent-only YAML needs four model/tool
+points. Unbound points deny, with `agent_shutdown` retained as audit-only.
+Keep the entire bundle immutable for a run. Manifest parsing is eager; Rego
+loading/compilation is lazy, so a broken later policy may fail after prior
+effects. These examples use the tested `agent-control-spec==0.4.0a4` Rego
+profile. Its Cedar engine expects legacy metadata and fails closed here.
+YAML `approval` resolver settings are not wired into host authority; use the
+explicit SDK resolver. See [coverage](../../docs/coverage.md#acs-policy-source)
+and [security](../../SECURITY.md#acs-configuration-is-trusted-code) for native
+network, credential, deadline, pool, payload and platform limitations.
 
 There is no custom `BaseLLM` subclass or model-client wrapper. `OpenAICompletion`
 is the same built-in provider that CrewAI's `LLM` factory selects for this
@@ -125,6 +339,11 @@ They are not a hardened transport layer for an untrusted model server.
   The researcher has a 1,600-character response limit and the editor has an
   800-character limit, represented by **different interceptor instances**. The
   example checks that each policy saw only its bound agent ID.
+- **ACS tool controls:** the same real tool request is denied by the shipped
+  YAML/Rego bundle before its demonstration-only body executes.
+- **ACS multiple agents:** the same generated research/editor workflow has a
+  shared no-tools manifest and separate YAML response limits; actual SDK
+  verdict reasons show the per-agent policies stayed on disjoint sessions.
 
 ```mermaid
 flowchart LR
@@ -174,8 +393,9 @@ direct LLM/tool calls outside the returned runner.
 LOCAL_MODEL_REQUIRED=1 uv run --no-sync pytest -m e2e
 ```
 
-The e2e suite runs the actual entry-point code both as modules and as individual
-files copied outside the repository, including approval, rejection and EOF.
+The e2e suite runs all **16 cases** through the actual entry-point code as
+modules and individual files copied outside the repository, including approval,
+rejection and EOF, plus the copied YAML/Rego assets for ACS.
 It requires real redaction, a real model-requested denied tool, and one approved
 preview or no preview after rejection. Native structured tool-call responses can
 bypass the textual post-model hook; tool authorization uses `pre_tool_call`,
@@ -205,7 +425,8 @@ LOCAL_MODEL_REQUIRED=1 EXAMPLE_CAPTURE_DIR=docs/example-runs \
 ```
 
 Module receipts use `llm-redacted`, `tool-blocked`, `human-approved`,
-`human-rejected`, `human-eof` and `multi-agent`; copied-file receipts add a
+`human-rejected`, `human-eof`, `multi-agent-llm-hooks`, `acs-tool-blocked` and
+`acs-multi-agent-llm-hooks`; copied-file receipts add a
 `-standalone` suffix. Existing `allowed`/`blocked` receipts are historical evidence
 from the previous generic demos, not evidence for these replacements.
 

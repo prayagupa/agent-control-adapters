@@ -18,6 +18,10 @@ Temperature: 0. Maximum tokens per request: 256. No remote model fallback.
 | `human-eof.json` | Draft blocked when input closes | 1 |
 | `multi-agent.json` | Two agents, isolated per-agent interceptors | 2 |
 
+These historical files keep their original names. The current multi-agent
+LLM-hook examples generate `multi-agent-llm-hooks` and
+`acs-multi-agent-llm-hooks` receipts instead.
+
 Approval receipts deliberately say `piped-test-input`. They prove approval-seam
 behavior with real model generation, **not that a human reviewed these runs**.
 The interactive command reads an actual operator's terminal response.

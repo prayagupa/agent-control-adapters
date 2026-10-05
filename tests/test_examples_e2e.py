@@ -27,12 +27,20 @@ def _object(value: object) -> dict[str, object]:
 @pytest.mark.parametrize(
     ("example", "operator_input", "status", "receipt_name"),
     [
-        ("llm_hooks", "", "allowed", "llm-redacted"),
-        ("tool_hooks", "", "blocked", "tool-blocked"),
-        ("human_approval", "approve\n", "allowed", "human-approved"),
-        ("human_approval", "reject\n", "blocked", "human-rejected"),
-        ("human_approval", "", "blocked", "human-eof"),
-        ("multi_agent", "", "allowed", "multi-agent"),
+        ("agent_hooks.llm_hooks", "", "allowed", "llm-redacted"),
+        ("agent_hooks.tool_hooks", "", "blocked", "tool-blocked"),
+        ("agent_hooks.human_approval", "approve\n", "allowed", "human-approved"),
+        ("agent_hooks.human_approval", "reject\n", "blocked", "human-rejected"),
+        ("agent_hooks.human_approval", "", "blocked", "human-eof"),
+        ("agent_hooks.multi_agent_llm_hooks", "", "allowed", "multi-agent-llm-hooks"),
+        pytest.param("acs.tool_hooks", "", "blocked", "acs-tool-blocked", marks=pytest.mark.acs),
+        pytest.param(
+            "acs.multi_agent_llm_hooks",
+            "",
+            "allowed",
+            "acs-multi-agent-llm-hooks",
+            marks=pytest.mark.acs,
+        ),
     ],
 )
 def test_real_local_example(
@@ -58,10 +66,17 @@ def test_real_local_example(
         "CREWAI_TELEMETRY_ENABLED": "false",
         "PYTHONUNBUFFERED": "1",
     }
+    env.pop("ACS_OPA_TIMEOUT_MS", None)
+    env.pop("ACS_REGO_V0", None)
     command = [sys.executable, "-I", str(ROOT / "tests" / "record_example.py"), example]
     if standalone:
-        copied_example = tmp_path / f"{example}.py"
-        shutil.copyfile(ROOT / "examples" / "crewai" / f"{example}.py", copied_example)
+        source = ROOT / "examples" / "crewai" / Path(*example.split(".")).with_suffix(".py")
+        if example.startswith("acs."):
+            shutil.copytree(source.parent, tmp_path / "acs")
+            copied_example = tmp_path / "acs" / source.name
+        else:
+            copied_example = tmp_path / source.name
+            shutil.copyfile(source, copied_example)
         command.extend(["--script", str(copied_example)])
         working_directory = tmp_path
     else:
@@ -86,6 +101,7 @@ def test_real_local_example(
     ]
     assert len(receipts) == 1, transcript
     result = _object(json.loads(receipts[0]))
+    assert result["example"] == example
     assert result["status"] == status
     metadata = _object(result["model"])
     assert metadata["model"] == local_model_name
@@ -96,7 +112,19 @@ def test_real_local_example(
     raw_decisions = result["decisions"]
     assert isinstance(raw_decisions, list) and raw_decisions
     decisions = [_object(item) for item in cast(list[object], raw_decisions)]
-    if example in {"llm_hooks", "multi_agent"} or status == "allowed":
+    for item in decisions:
+        verdicts = item["verdicts"]
+        assert isinstance(verdicts, list) and verdicts
+        assert all(_object(verdict)["name"] is None for verdict in cast(list[object], verdicts))
+    if (
+        example
+        in {
+            "agent_hooks.llm_hooks",
+            "agent_hooks.multi_agent_llm_hooks",
+            "acs.multi_agent_llm_hooks",
+        }
+        or status == "allowed"
+    ):
         assert any(item["point"] == "post_model_call" for item in decisions)
     if status == "allowed":
         assert isinstance(result["output"], str) and result["output"]
@@ -105,7 +133,7 @@ def test_real_local_example(
         assert result["output"] is None
         assert any(item["decision"] == "deny" for item in decisions)
     details = _object(result["details"])
-    if example == "llm_hooks":
+    if example == "agent_hooks.llm_hooks":
         output = result["output"]
         assert isinstance(output, str) and "[REDACTED]" in output
         assert re.search(r"\b\d{3}-\d{2}-\d{4}\b", output) is None
@@ -113,14 +141,14 @@ def test_real_local_example(
             item["point"] == "post_model_call" and item["decision"] == "transform"
             for item in decisions
         )
-    if example == "tool_hooks":
+    if example in {"agent_hooks.tool_hooks", "acs.tool_hooks"}:
         assert any(
             item["point"] == "pre_tool_call" and item["reason"] == "example:destructive_tool"
             for item in decisions
         )
         assert not any(item["point"] == "post_tool_call" for item in decisions)
         assert "Blocked: delete_file did not execute." in completed.stdout
-    if example == "human_approval":
+    if example == "agent_hooks.human_approval":
         assert details["input_mode"] == "piped-test-input"
         resolution = "approval" if status == "allowed" else "rejection"
         assert any(
@@ -136,18 +164,41 @@ def test_real_local_example(
         assert any(item["point"] == "post_tool_call" for item in decisions) is (status == "allowed")
     expected_requests = (
         2
-        if example == "multi_agent" or (example == "human_approval" and status == "allowed")
+        if example in {"agent_hooks.multi_agent_llm_hooks", "acs.multi_agent_llm_hooks"}
+        or (example == "agent_hooks.human_approval" and status == "allowed")
         else 1
     )
     assert metadata["requests"] == expected_requests
-    if example == "multi_agent":
+    if example in {"agent_hooks.multi_agent_llm_hooks", "acs.multi_agent_llm_hooks"}:
         assert metadata["requests"] >= 2
-        assert "Per-agent policies stayed isolated." in completed.stdout
+        message = (
+            "Per-agent YAML policies stayed isolated."
+            if example == "acs.multi_agent_llm_hooks"
+            else "Per-agent policies stayed isolated."
+        )
+        assert message in completed.stdout
         assert (
             len({item["session_id"] for item in decisions if item["point"] == "post_model_call"})
             == 2
         )
         assert len(cast(list[object], details["task_outputs"])) == 2
+        if example == "acs.multi_agent_llm_hooks":
+            policy_sessions: dict[str, set[object]] = {}
+            for reason in ("example:researcher_text_limit", "example:editor_text_limit"):
+                policy_sessions[reason] = {
+                    item["session_id"]
+                    for item in decisions
+                    if item["point"] == "post_model_call"
+                    and any(
+                        _object(verdict)["reason"] == reason
+                        for verdict in cast(list[object], item["verdicts"])
+                    )
+                }
+            assert all(len(identities) == 1 for identities in policy_sessions.values())
+            assert (
+                len({session for identities in policy_sessions.values() for session in identities})
+                == 2
+            )
     capture_dir = os.getenv("EXAMPLE_CAPTURE_DIR")
     if capture_dir:
         destination = Path(capture_dir).resolve()

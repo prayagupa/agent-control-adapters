@@ -15,6 +15,18 @@ members = [
 ]
 
 [[package]]
+name = "agent-control-spec"
+version = "0.4.0a4"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "agent-hooks-sdk" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/1a/6d/b8798c22f64a182971c5f3539db6db7d66ee16d6290db0a150101921666d/agent_control_spec-0.4.0a4.tar.gz", hash = "sha256:bc808a0dfb2689a5e561dd70aee35da9cd0f021ff92a23f358bfbb79f010c6a7", size = 426603, upload-time = "2026-09-26T21:12:06.949Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/fa/75/b05662401157cf67f673c8118d596e88d3cd92973039b9ed5857eab3d621/agent_control_spec-0.4.0a4-cp311-abi3-manylinux_2_34_x86_64.whl", hash = "sha256:76cb46daa6e79eb2db3aa08b2ee26e3ff96fc2061e8861608985ff4382e5f247", size = 8397891, upload-time = "2026-09-26T21:12:04.857Z" },
+]
+
+[[package]]
 name = "agent-hooks-adapters"
 version = "0.1.0a1"
 source = { editable = "packages/core" }
@@ -23,16 +35,20 @@ dependencies = [
 ]
 
 [package.optional-dependencies]
+acs = [
+    { name = "agent-control-spec" },
+]
 crewai = [
     { name = "agent-hooks-crewai" },
 ]
 
 [package.metadata]
 requires-dist = [
+    { name = "agent-control-spec", marker = "extra == 'acs'", specifier = "==0.4.0a4" },
     { name = "agent-hooks-crewai", marker = "extra == 'crewai'", editable = "packages/crewai" },
     { name = "agent-hooks-sdk", specifier = "==0.1.0a5" },
 ]
-provides-extras = ["crewai"]
+provides-extras = ["acs", "crewai"]
 
 [[package]]
 name = "agent-hooks-adapters-workspace"
@@ -43,6 +59,9 @@ dependencies = [
 ]
 
 [package.dev-dependencies]
+acs = [
+    { name = "agent-control-spec" },
+]
 dev = [
     { name = "bandit" },
     { name = "build" },
@@ -58,6 +77,7 @@ dev = [
 requires-dist = [{ name = "agent-hooks-crewai", editable = "packages/crewai" }]
 
 [package.metadata.requires-dev]
+acs = [{ name = "agent-control-spec", specifier = "==0.4.0a4" }]
 dev = [
     { name = "bandit", specifier = ">=1.8,<2" },
     { name = "build", specifier = ">=1.2,<2" },

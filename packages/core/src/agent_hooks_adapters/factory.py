@@ -3,18 +3,21 @@
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
+from pathlib import Path
 
 from agent_hooks import ApprovalResolver, Interceptor
 
+from .acs import normalize_policy_file
 from .contracts import Adapter, AgentPolicy, Backend
 from .errors import UnsupportedBackendError
 
 
-def with_agent_hooks(
+def with_agent_controls(
     *,
     backend: Backend,
     runtime: object,
-    interceptors: Sequence[Interceptor],
+    interceptors: Sequence[Interceptor] | None = None,
+    policy_file: str | Path | None = None,
     agents: Mapping[str, object] | None = None,
     agent_policies: Sequence[AgentPolicy] = (),
     resolver: ApprovalResolver | None = None,
@@ -22,9 +25,12 @@ def with_agent_hooks(
     emit_timeout: float = 30,
     max_records: int = 1000,
 ) -> Adapter:
-    """Bind native objects; invalid selectors or missing backends raise UnsupportedBackendError."""
+    """Govern a native runtime with Python interceptors or an ACS manifest, never both."""
     if backend is not Backend.CREWAI:
         raise UnsupportedBackendError("Unsupported adapter backend; use a Backend enum member.")
+    if (interceptors is None) == (policy_file is None):
+        raise ValueError("Provide exactly one of interceptors or policy_file")
+    path = normalize_policy_file(policy_file) if policy_file is not None else None
     try:
         from agent_hooks_crewai.portable import create_backend
     except ModuleNotFoundError as error:
@@ -35,6 +41,7 @@ def with_agent_hooks(
     return create_backend(
         runtime,
         interceptors=interceptors,
+        policy_file=path,
         agents=agents,
         agent_policies=agent_policies,
         resolver=resolver,
@@ -44,4 +51,5 @@ def with_agent_hooks(
     )
 
 
-create_adapter = with_agent_hooks
+with_agent_hooks = with_agent_controls
+create_adapter = with_agent_controls

@@ -21,7 +21,7 @@ jobs:
         with:
           python-version: "3.11"
           enable-cache: true
-      - run: uv sync --locked --group dev
+      - run: uv sync --locked --group dev --group acs
       - run: uv run --no-sync ruff check .
       - run: uv run --no-sync ruff format --check .
       - run: uv run --no-sync pyright
@@ -38,7 +38,7 @@ jobs:
         with:
           python-version: "3.11"
           enable-cache: true
-      - run: uv sync --locked --group dev
+      - run: uv sync --locked --group dev --group acs
       - run: uv run --no-sync bandit -r packages/core/src packages/crewai/src examples -q
       # Deliberately fail on known advisories; see SECURITY.md for the current blocker.
       - run: uv run --no-sync pip-audit

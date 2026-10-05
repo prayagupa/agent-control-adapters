@@ -23,7 +23,14 @@ from agent_hooks_crewai import AdapterBlocked, CrewAIAdapter
 from crewai.crews.crew_output import CrewOutput
 
 ROOT: Path = Path(__file__).resolve().parents[1]
-EXAMPLES: tuple[str, ...] = ("llm_hooks", "tool_hooks", "human_approval", "multi_agent")
+EXAMPLES: tuple[str, ...] = (
+    "agent_hooks.llm_hooks",
+    "agent_hooks.tool_hooks",
+    "agent_hooks.human_approval",
+    "agent_hooks.multi_agent_llm_hooks",
+    "acs.tool_hooks",
+    "acs.multi_agent_llm_hooks",
+)
 
 
 @dataclass
@@ -165,6 +172,14 @@ def record_example(example: str, script: Path | None = None) -> dict[str, object
                 "resolved_by": record.resolved_by,
                 "session_id": record.session_id,
                 "sequence": record.sequence,
+                "verdicts": [
+                    {
+                        "name": verdict.name,
+                        "decision": verdict.decision.value,
+                        "reason": verdict.reason,
+                    }
+                    for verdict in record.verdicts
+                ],
             }
             for record in execution.records
         ],

@@ -1,4 +1,4 @@
-"""Adapt CrewAI's tool-approval hook: python -m examples.crewai.human_approval."""
+"""Adapt tool approval: python -m examples.crewai.agent_hooks.human_approval."""
 
 from __future__ import annotations
 
@@ -21,7 +21,7 @@ from agent_hooks import (
     Decision,
     Verdict,
 )
-from agent_hooks_adapters import AdapterBlocked, Backend, RunRequest, with_agent_hooks
+from agent_hooks_adapters import AdapterBlocked, Backend, RunRequest, with_agent_controls
 from crewai import Agent, Crew, Process, Task
 from crewai.llms.providers.openai.completion import OpenAICompletion
 from crewai.tools import tool
@@ -119,7 +119,7 @@ def main() -> None:
         agent=agent,
     )
     crew = Crew(agents=[agent], tasks=[task], process=Process.sequential, cache=False)
-    adapter = with_agent_hooks(
+    agent_control = with_agent_controls(
         backend=Backend.CREWAI,
         runtime=crew,
         interceptors=[ReviewBeforeSend()],
@@ -128,9 +128,9 @@ def main() -> None:
         emit_timeout=30,
     )
     try:
-        result = adapter.run(RunRequest())
+        result = agent_control.run(RunRequest())
     except AdapterBlocked:
-        if not any(record.resolved_by == "rejection" for record in adapter.records):
+        if not any(record.resolved_by == "rejection" for record in agent_control.records):
             raise RuntimeError("The model did not exercise the tool-approval rejection") from None
         print("Blocked: send_email did not execute.")
     else:

@@ -12,6 +12,8 @@ request/result contract, logical policy assignments and explicit backend
 selection. The CrewAI package owns translation and execution scope. The SDK owns verdict
 composition, context identity, approval validation, and interception records.
 Applications own policies, actual tools, model clients, and external side effects.
+Optional YAML controls pin `agent-control-spec==0.4.0a4`, whose native interceptor
+implements the same published SDK contract.
 
 The initial profile also rejects automatic summarization and structured-output
 repair. These can issue model calls outside the framework's public hooks. The
@@ -21,9 +23,13 @@ client; the application receives a clear block rather than an ungoverned answer.
 
 ```mermaid
 flowchart TB
-    App["Trusted application configuration"] --> API["with_agent_hooks + RunRequest"]
+    App["Trusted application configuration"] --> API["with_agent_controls + RunRequest"]
     API --> Bind["Resolve application labels to actual agent objects"]
-    Bind --> Run["Adapter.run -> RunResult"]
+    Bind --> Source{"Exactly one source per assignment"}
+    Source --> Native["Python interceptor tuple"]
+    Source --> ACS["Optional native AcsInterceptor: YAML/Rego"]
+    Native --> Run["Adapter.run -> RunResult"]
+    ACS --> Run
     Run --> Adapter["Existing CrewAIAdapter.kickoff"]
     Adapter --> Scope["Execution-scoped public hooks"]
     Scope --> Crew["CrewAI sequential runner"]
@@ -42,8 +48,9 @@ flowchart TB
 
 ## Public API and ownership
 
-`with_agent_hooks` wraps an existing native runtime; `create_adapter` is a
-compatible alias. Neither call registers global hooks or changes the workflow.
+`with_agent_controls` wraps an existing native runtime; `with_agent_hooks` and
+`create_adapter` are exact compatibility aliases. No call registers global hooks
+or changes the workflow.
 The portable `Adapter` protocol exposes `run(RunRequest) -> RunResult`, bounded
 SDK audit snapshots and explicit cleanup failure. `RunRequest` captures strict,
 bounded JSON and returns detached copies; `RunResult` contains text and actual
@@ -81,6 +88,45 @@ SDK state. A bounded group of hook callers may wait for emission serialization
 because CrewAI can execute multiple native tool calls in parallel even in a
 sequential crew. Tool correlation includes host thread, agent and tool identity;
 missing post events are not invented.
+
+## Policy source composition
+
+The core accepts exactly one shared source, `interceptors` or `policy_file`.
+Each frozen logical `AgentPolicy` accepts the same alternatives; all four
+shared/agent combinations work. Pure path validation captures an absolute
+`Path` without resolving symlinks or lexical `..`. CrewAI runtime, deadline,
+record-limit and every ownership/binding check complete before manifest I/O.
+
+Only an explicit YAML source imports the fixed `agent_control_spec` module,
+after checking its installed distribution version. A narrow local constructor
+protocol bridges the released package's missing typing marker; there is no
+dynamic plugin registry or user-selected import. Missing/incompatible installs
+raise `ACSUnavailableError`; nested import errors and native constructor errors
+remain visible.
+
+ACS is already an SDK interceptor. Compile it into the existing native binding
+tuples and keep one mapper, worker, emitter and error/record contract. Native
+manifest parsing/inheritance is eager; Rego bundles compile lazily at their first
+bound point. The files and any referenced network/credential configuration are
+trusted application code. They must stay immutable; a constructor does not
+snapshot every bundle or guarantee preflight readiness.
+
+For eager deployment preflight, operators may use ACS's published
+`ActivatedPolicy` API separately. Its native readiness/deadline behavior still
+applies; a deadline is not proof abandoned native work stopped. Advanced services
+can pass a prebuilt `AcsInterceptor` through `interceptors=` to reuse native
+handles/cache or choose native limits, without creating a second host engine.
+
+SDK registration receives no explicit name. Actual `verdicts[].name` stays
+`None`, even if a native interceptor has a `name` property; `decided_by` remains
+an actual positional index. Do not manufacture names or claim duplicate-name
+rejection. Application-owned ordered configuration supplies source context.
+
+Global YAML binds all eight points, while an agent file needs only model/tool
+points. Unbound events deny, with shutdown recorded as audit-only. Manifest
+approval settings are not a host resolver. The released Cedar engine requires
+legacy `snapshot.envelope.agent.id`, so canonical SDK contexts fail closed;
+the tested profile is YAML/Rego without translation.
 
 ## Denial is not a model response
 
@@ -128,6 +174,17 @@ if a noncooperative callback remains alive. A daemon thread in that case is a
 **reported residual resource**, not a claimed successful cancellation. Use process
 isolation for untrusted or potentially nonterminating policy code.
 
+ACS adds inherited native limits, not another adapter worker. Its default
+Rego deadline is 5,000 ms, influenced by `ACS_OPA_TIMEOUT_MS` and `ACS_REGO_V0`.
+Native work can outlive a deadline in two pools of up to 32 abandoned workers
+each, plus concurrent work; these are not global service quotas. Native process
+allocation/parser failures may abort the process. Synchronous native execution
+is not preempted by SDK `timeout`; host `emit_timeout` bounds waiting and cleanup
+reporting. HTTPS inheritance during construction is outside both host deadlines;
+annotators may use blocking network calls and named environment credentials.
+The full serialized-snapshot default is 1,048,576 bytes. See the
+[security scope](../SECURITY.md#acs-configuration-is-trusted-code).
+
 The adapter does not own the model service or cancel Ollama's server-side
 generation. Model clients, HTTP timeouts, tool deadlines and external side-effect
 idempotency remain application responsibilities. No automatic replay is performed
@@ -145,6 +202,8 @@ by the adapter after a denial.
 | Hung callback or approval | Finite deadlines; bounded residual work and explicit cleanup error | Noncooperative Python needs process isolation |
 | Secret disclosure in diagnostics | No payload logging by adapter; safe public denial text | Policy reason strings and framework telemetry must also be designed safely |
 | Later hooks undo enforcement | Narrow profile and explicit coverage documentation | Trusted hooks/plugins can bypass guarantees; not an authoritative kernel |
+| Request chooses a policy file or remote inheritance | Policy sources belong to trusted application configuration | Native manifests can select HTTPS/HTTP effects and host credentials; no egress sandbox |
+| Lazy compilation fails on a later agent/tool | Native error becomes actual denial at its first bound point | Prior effects are not rolled back; construction is not artifact preflight |
 
 ## Alternatives and future packages
 
@@ -163,6 +222,12 @@ Each future backend must demonstrate the same request/result, blocked-error,
 policy-ordering and identity-ownership contracts through its actual runner.
 Differences in coverage, structured output and concurrency must fail explicitly,
 not be hidden behind the common method name.
+
+Separate Agent Hooks and ACS CrewAI mappers were rejected: ACS already implements
+the SDK contract, and duplicating admission, identity mapping and cleanup would
+increase the security surface. Translating YAML into synthetic Python policies
+or adding a legacy Cedar envelope was also rejected in favor of native semantics
+and an explicit limitation.
 
 ## Rollout
 

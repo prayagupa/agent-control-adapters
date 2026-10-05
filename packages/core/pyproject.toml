@@ -11,6 +11,7 @@ requires-python = ">=3.11,<3.14"
 dependencies = ["agent-hooks-sdk==0.1.0a5"]
 
 [project.optional-dependencies]
+acs = ["agent-control-spec==0.4.0a4"]
 crewai = ["agent-hooks-crewai==0.1.0a1"]
 
 [tool.hatch.build.targets.wheel]

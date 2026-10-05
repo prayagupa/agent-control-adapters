@@ -4,10 +4,12 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import StrEnum
+from pathlib import Path
 from typing import Protocol, cast
 
 from agent_hooks import InterceptionRecord, Interceptor
 
+from .acs import normalize_policy_file
 from .errors import AdapterCleanupError
 from .json import JSON, object_value
 
@@ -58,17 +60,23 @@ class RunResult:
 
 @dataclass(frozen=True)
 class AgentPolicy:
-    """Additional controls selected by a trusted application-owned agent binding."""
+    """Additional controls selected by a trusted application-owned agent binding.
+
+    A supplied policy_file is captured as an absolute Path, without resolving symlinks.
+    """
 
     agent_id: str
-    interceptors: tuple[Interceptor, ...]
+    interceptors: tuple[Interceptor, ...] = ()
+    policy_file: str | Path | None = None
 
     def __post_init__(self) -> None:
         validate_agent_id(self.agent_id)
         if not isinstance(cast("object", self.interceptors), tuple):
             raise TypeError("AgentPolicy.interceptors must be a tuple")
-        if not self.interceptors:
-            raise ValueError("AgentPolicy.interceptors must be nonempty")
+        if bool(self.interceptors) == (self.policy_file is not None):
+            raise ValueError("AgentPolicy requires either nonempty interceptors or policy_file")
+        if self.policy_file is not None:
+            object.__setattr__(self, "policy_file", normalize_policy_file(self.policy_file))
 
 
 class Adapter(Protocol):

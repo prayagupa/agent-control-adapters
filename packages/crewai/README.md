@@ -6,14 +6,22 @@ register global hooks, or require a local SDK fork.
 
 ## Public API
 
-Prefer the [shared API](../core): import `Backend`, `with_agent_hooks`, `RunRequest`,
+Prefer the [shared API](../core): import `Backend`, `with_agent_controls`, `RunRequest`,
 `AgentPolicy`, `AdapterBlocked`, and `AdapterCleanupError` from
 `agent_hooks_adapters`. Select `backend=Backend.CREWAI`, pass the actual Crew as
 `runtime`, and bind application agent labels through the trusted `agents` map.
-Call `adapter.run(request)` for normalized text and audit records.
-`create_adapter` remains a compatible alias. The
+Call `agent_control.run(request)` for normalized text and audit records.
+`with_agent_hooks` and `create_adapter` remain exact compatible aliases. Select
+native Python `interceptors=` or an ACS `policy_file=`; per-agent assignments
+accept the same alternatives, including mixed sources. Install the shared
+distribution's `[crewai,acs]` extras for the pinned native ACS runtime. The
 [complete hook examples](../../examples/crewai) adapt CrewAI's native
 response-sanitization, tool-safety, approval and agent-scoping scenarios.
+The two ACS examples replace Python policies with native YAML/Rego bundles,
+without changing the CrewAI runtime or governed execution call.
+Native Python-policy scripts are in
+[agent_hooks/](../../examples/crewai/agent_hooks); ACS scripts and their complete
+policy assets are in [acs/](../../examples/crewai/acs).
 
 For backward compatibility, import `CrewAIAdapter`, native `AgentPolicy`,
 `AdapterBlocked`, and `AdapterCleanupError` from `agent_hooks_crewai`.
@@ -175,6 +183,33 @@ objects, nonfinite floats, integers outside the interoperable 53-bit range,
 unknown envelope/message keys, depth over 32, more than 10,000 nodes, and more
 than 1 MiB of UTF-8 string content are rejected. This bound also applies to the
 complete SDK context, which includes copies of the target.
+
+## ACS controls
+
+`policy_file` is application-owned configuration. This convenience compiles
+native `AcsInterceptor` instances into the existing interceptor bindings, not a
+second execution engine. Runtime, run-limit and all agent-binding validation
+finish before any manifest is opened.
+
+ACS 0.4.0a4 parses a manifest eagerly but loads/compiles Rego artifacts lazily.
+Missing bundles deny at their first bound event, which may follow earlier model
+or tool effects. Shared manifests should bind all eight points; per-agent files
+only need the four model/tool points. Shutdown remains audit-only.
+Keep referenced resources immutable; no bundle snapshot or hot reload is promised.
+
+The adapter does not map YAML `approval` settings to a resolver or honor
+`on_timeout: allow`. Use the explicit host `resolver`; mandatory denial still
+wins. Cedar is not supported with the released engine's legacy envelope
+expectation and fails closed on canonical contexts. Actual SDK summary names
+remain `None`, including native ACS instances.
+
+The same worker deadlines and cleanup reporting apply, but synchronous native
+work cannot be forcibly interrupted. ACS also has internal Rego deadlines,
+work pools and payload limits. The full serialized-snapshot default is
+1,048,576 bytes, independently of this host's JSON-content limit. See
+[coverage](../../docs/coverage.md#acs-policy-source) and
+[security](../../SECURITY.md#acs-configuration-is-trusted-code) for native
+network, credential, pool and process-abort caveats.
 
 Shutdown verdicts are recorded without undoing a completed action. Shutdown
 engine failures preserve any original exception. If timeout poisoning prevents

@@ -1,4 +1,4 @@
-"""Adapt CrewAI's agent-scoped model hooks: python -m examples.crewai.multi_agent."""
+"""Adapt agent-scoped LLM hooks: python -m examples.crewai.agent_hooks.multi_agent_llm_hooks."""
 
 from __future__ import annotations
 
@@ -13,7 +13,7 @@ os.environ["CREWAI_TRACING_ENABLED"] = "false"
 os.environ["CREWAI_TELEMETRY_ENABLED"] = "false"
 
 from agent_hooks import AgentContext, Decision, Verdict
-from agent_hooks_adapters import AgentPolicy, Backend, RunRequest, with_agent_hooks
+from agent_hooks_adapters import AgentPolicy, Backend, RunRequest, with_agent_controls
 from crewai import Agent, Crew, Process, Task
 from crewai.llms.providers.openai.completion import OpenAICompletion
 
@@ -110,7 +110,7 @@ def main() -> None:
     )
     researcher_policy = AgentTextLimit(max_characters=1600)
     editor_policy = AgentTextLimit(max_characters=800)
-    adapter = with_agent_hooks(
+    agent_control = with_agent_controls(
         backend=Backend.CREWAI,
         runtime=crew,
         interceptors=[NoTools()],
@@ -120,7 +120,7 @@ def main() -> None:
             AgentPolicy("editor", (editor_policy,)),
         ],
     )
-    result = adapter.run(RunRequest())
+    result = agent_control.run(RunRequest())
     if researcher_policy.seen_agent_ids != {str(researcher.id)} or (
         editor_policy.seen_agent_ids != {str(editor.id)}
     ):

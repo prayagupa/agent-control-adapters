@@ -21,6 +21,7 @@ agent-hooks-adapters = { workspace = true }
 agent-hooks-crewai = { workspace = true }
 
 [dependency-groups]
+acs = ["agent-control-spec==0.4.0a4"]
 dev = [
     "bandit>=1.8,<2",
     "build>=1.2,<2",
@@ -50,4 +51,7 @@ venv = ".venv"
 testpaths = ["packages/core/tests", "packages/crewai/tests", "tests"]
 pythonpath = ["."]
 addopts = "-ra -p no:agent_hooks_ctk"
-markers = ["e2e: requires the operator-managed local Ollama model"]
+markers = [
+    "acs: requires the optional native ACS runtime and real policy engine",
+    "e2e: requires the operator-managed local Ollama model",
+]

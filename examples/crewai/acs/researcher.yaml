@@ -1,0 +1,13 @@
+agent_control_specification_version: "0.5.0-alpha.1"
+policies:
+  researcher_text_limit:
+    type: rego
+    bundle: "./policy"
+    query: data.controls.researcher_limit
+intervention_points:
+  pre_model_call: &check
+    policy_target: "$snap.target"
+    policy: {id: researcher_text_limit}
+  post_model_call: *check
+  pre_tool_call: *check
+  post_tool_call: *check
