@@ -12,6 +12,7 @@ from typing import Protocol, cast
 from uuid import uuid4
 
 from agent_hooks import ApprovalResolver, InterceptionRecord, Interceptor
+from agent_hooks_adapters import RunRequest, RunResult
 from crewai import Agent, Crew, Process, Task
 from crewai.agents.crew_agent_executor import CrewAgentExecutor
 from crewai.crews.crew_output import CrewOutput
@@ -246,6 +247,13 @@ class CrewAIAdapter:
         for name in fields:
             if getattr(owner, name, None):
                 raise ValueError(f"Unsupported CrewAI profile option: {name}")
+
+    def run(self, request: RunRequest | None = None) -> RunResult:
+        """Execute through the portable API with the same single-use enforcement scope."""
+        if request is not None and not isinstance(cast("object", request), RunRequest):
+            raise TypeError("request must be a RunRequest")
+        output = self.kickoff(request.inputs if request is not None else None)
+        return RunResult(output.raw, self.records, self.records_dropped)
 
     def kickoff(self, inputs: dict[str, object] | None = None) -> CrewOutput:
         """Execute once, raising AdapterBlocked on denial; always attempt bounded cleanup."""

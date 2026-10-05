@@ -9,6 +9,7 @@ description = "Execution-scoped agent-hooks governance for CrewAI"
 readme = "README.md"
 requires-python = ">=3.11,<3.14"
 dependencies = [
+  "agent-hooks-adapters==0.1.0a1",
   "crewai==1.15.23",
   "agent-hooks-sdk==0.1.0a5",
 ]

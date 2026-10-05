@@ -9,9 +9,30 @@ resolution-markers = [
 
 [manifest]
 members = [
+    "agent-hooks-adapters",
     "agent-hooks-adapters-workspace",
     "agent-hooks-crewai",
 ]
+
+[[package]]
+name = "agent-hooks-adapters"
+version = "0.1.0a1"
+source = { editable = "packages/core" }
+dependencies = [
+    { name = "agent-hooks-sdk" },
+]
+
+[package.optional-dependencies]
+crewai = [
+    { name = "agent-hooks-crewai" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "agent-hooks-crewai", marker = "extra == 'crewai'", editable = "packages/crewai" },
+    { name = "agent-hooks-sdk", specifier = "==0.1.0a5" },
+]
+provides-extras = ["crewai"]
 
 [[package]]
 name = "agent-hooks-adapters-workspace"
@@ -53,12 +74,14 @@ name = "agent-hooks-crewai"
 version = "0.1.0a1"
 source = { editable = "packages/crewai" }
 dependencies = [
+    { name = "agent-hooks-adapters" },
     { name = "agent-hooks-sdk" },
     { name = "crewai" },
 ]
 
 [package.metadata]
 requires-dist = [
+    { name = "agent-hooks-adapters", editable = "packages/core" },
     { name = "agent-hooks-sdk", specifier = "==0.1.0a5" },
     { name = "crewai", specifier = "==1.15.23" },
 ]

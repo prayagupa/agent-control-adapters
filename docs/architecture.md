@@ -7,7 +7,9 @@ Neither upstream framework imports the adapter. The initial release pins
 `crewai==1.15.23` and `agent-hooks-sdk==0.1.0a5`: these are compatibility boundaries,
 not a claim that every future patch is supported.
 
-The package owns translation and execution scope. The SDK owns verdict
+The shared `agent-hooks-adapters` package owns the small application-facing
+request/result contract, logical policy assignments and explicit backend
+selection. The CrewAI package owns translation and execution scope. The SDK owns verdict
 composition, context identity, approval validation, and interception records.
 Applications own policies, actual tools, model clients, and external side effects.
 
@@ -19,8 +21,10 @@ client; the application receives a clear block rather than an ungoverned answer.
 
 ```mermaid
 flowchart TB
-    App["Trusted application configuration"] --> Bind["Bind shared and per-agent policies"]
-    Bind --> Adapter["CrewAIAdapter.kickoff"]
+    App["Trusted application configuration"] --> API["with_agent_hooks + RunRequest"]
+    API --> Bind["Resolve application labels to actual agent objects"]
+    Bind --> Run["Adapter.run -> RunResult"]
+    Run --> Adapter["Existing CrewAIAdapter.kickoff"]
     Adapter --> Scope["Execution-scoped public hooks"]
     Scope --> Crew["CrewAI sequential runner"]
     Crew --> Hook["Model, tool and execution boundaries"]
@@ -38,11 +42,35 @@ flowchart TB
 
 ## Public API and ownership
 
-`CrewAIAdapter` is single-use and binds one actual `Crew`. Its `kickoff()` method
+`with_agent_hooks` wraps an existing native runtime; `create_adapter` is a
+compatible alias. Neither call registers global hooks or changes the workflow.
+The portable `Adapter` protocol exposes `run(RunRequest) -> RunResult`, bounded
+SDK audit snapshots and explicit cleanup failure. `RunRequest` captures strict,
+bounded JSON and returns detached copies; `RunResult` contains text and actual
+records, never a success-shaped denial. The core imports no CrewAI types except
+at its lazy composition-root dispatch, when the user explicitly selects that
+installed backend with the public `Backend` enum. `Backend.CREWAI` is the only
+implemented member. Raw strings and invalid selectors fail before backend loading,
+instead of falling back.
+
+Portable `AgentPolicy` names an application-owned label. The trusted `agents`
+configuration resolves that label to one actual crew-owned Agent. Missing,
+foreign, duplicate or ambiguous bindings are rejected; policies never select an
+agent from request content or role text. Labels do not overwrite native SDK
+agent UUIDs or other host metadata. The compiled controls are frozen into the
+existing native object bindings. This keeps policy assignments reusable without
+inventing a universal workflow or changing current event coverage.
+
+`CrewAIAdapter` is single-use and binds one actual `Crew`. Its `run()` delegates
+to the existing `kickoff()` method, so both entry points share admission, atomic
+single-use state, scoped hooks, denial and cleanup. The `kickoff()` method
 installs scoped hooks only for the run and always cleans up its worker. It does
 not register process-wide callbacks. `AgentPolicy` binds interceptor instances to
 an actual host-owned agent identity. Agents with the same role text do not share
 policies unless the application deliberately gives them the same instance.
+Native callers retain their original API and native result. Shared blocked and
+cleanup error bases let portable callers catch enforcement failures without
+depending on CrewAI, while the native abort type, causes and notes are preserved.
 
 Crew execution-boundary events use shared policies. Model/tool events use shared
 policies plus the matching agent's policies. Composition is sequential/run-all:
@@ -127,9 +155,14 @@ The chosen public-hook wrapper keeps the dependency direction explicit and
 rejects unsupported paths.
 
 Future adapters belong in independently versioned `packages/langgraph`,
-`packages/google-adk`, or `packages/openai-agents`. Share behavioral tests before
-introducing a runtime common package. A shared abstraction should follow proven
-duplication, not precede it.
+`packages/google-adk`, or `packages/openai-agents`. The approved portability
+requirement introduces only shared data/protocol contracts and explicit
+dispatch now; there is no generic runner, plugin system or workflow translator.
+An OpenAI adapter is not implemented or advertised as interchangeable yet.
+Each future backend must demonstrate the same request/result, blocked-error,
+policy-ordering and identity-ownership contracts through its actual runner.
+Differences in coverage, structured output and concurrency must fail explicitly,
+not be hidden behind the common method name.
 
 ## Rollout
 

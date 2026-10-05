@@ -6,8 +6,20 @@ register global hooks, or require a local SDK fork.
 
 ## Public API
 
-Import `CrewAIAdapter`, `AgentPolicy`, `AdapterBlocked`, and
-`AdapterCleanupError` from `agent_hooks_crewai`.
+Prefer the [shared API](../core): import `Backend`, `with_agent_hooks`, `RunRequest`,
+`AgentPolicy`, `AdapterBlocked`, and `AdapterCleanupError` from
+`agent_hooks_adapters`. Select `backend=Backend.CREWAI`, pass the actual Crew as
+`runtime`, and bind application agent labels through the trusted `agents` map.
+Call `adapter.run(request)` for normalized text and audit records.
+`create_adapter` remains a compatible alias. The
+[complete hook examples](../../examples/crewai) adapt CrewAI's native
+response-sanitization, tool-safety, approval and agent-scoping scenarios.
+
+For backward compatibility, import `CrewAIAdapter`, native `AgentPolicy`,
+`AdapterBlocked`, and `AdapterCleanupError` from `agent_hooks_crewai`.
+The native policy class still accepts an actual CrewAI Agent, and `kickoff()`
+still returns its original `CrewOutput`. Native error classes also inherit the
+shared error categories, preserving CrewAI's `HookAborted` behavior.
 
 ```text
 CrewAIAdapter(
@@ -24,6 +36,7 @@ CrewAIAdapter(
 AgentPolicy(agent: Agent, interceptors: tuple[Interceptor, ...])
 
 adapter.kickoff(inputs: dict[str, object] | None = None) -> CrewOutput
+adapter.run(request: RunRequest | None = None) -> RunResult
 adapter.records -> tuple[InterceptionRecord, ...]
 adapter.records_dropped -> int
 adapter.cleanup_error -> AdapterCleanupError | None
@@ -33,7 +46,8 @@ The signatures above describe the interface, not a runnable model example.
 See the repository's [real local-model examples](../../examples/crewai) and
 [architecture documentation](../../docs) for complete applications.
 
-Each adapter is **single-use**, including failed admission or a denied kickoff.
+Each adapter is **single-use**, including failed admission or a denied execution.
+`run()` and `kickoff()` share the same execution guard and cleanup scope.
 Create a new adapter for the next run. Use independent Crew objects for concurrent
 runs; concurrently reusing one Crew is unsupported. Shared interceptors must be
 nonempty. Agent bindings must be nonempty tuples, unique, and reference actual

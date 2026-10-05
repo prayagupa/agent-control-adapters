@@ -8,7 +8,8 @@ remove that dependency for applications installing this adapter.
 
 ## Supported profile
 
-Call `CrewAIAdapter.kickoff()` on a synchronous, sequential crew. Policies and
+Call `with_agent_hooks(...).run(...)` on a synchronous, sequential crew.
+The legacy `CrewAIAdapter.kickoff()` entry point remains supported. Policies and
 approval resolvers are trusted application code. Shared interceptors apply to
 crew boundaries; shared plus agent-bound interceptors apply to model/tool
 boundaries. Native parallel tool calls are serialized only at policy evaluation,
@@ -64,6 +65,13 @@ The adapter deliberately does **not** register `PRE_STEP` or `POST_STEP`.
   retry/idempotency layer or remote approval authentication is provided.
 
 ## Conformance claims
+
+CrewAI's native hook scenarios have [complete SDK-backed replacements](../examples/crewai):
+model-response sanitization, destructive-tool denial, pre-tool approval and
+agent-specific controls. Native hooks can swallow ordinary callback errors or
+let the agent continue after a tool denial; this adapter fails closed and makes
+denial sticky for the whole crew run. This is intentional, not drop-in equality
+with every native hook behavior.
 
 The SDK's reference-host conformance vectors, when run, establish **SDK reference
 behavior**, not this adapter's completeness. The adapter's tests separately
