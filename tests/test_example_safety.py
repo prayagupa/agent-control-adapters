@@ -32,6 +32,7 @@ from examples.crewai.agent_hooks import (
 from examples.crewai.agent_hooks.human_approval import ConsoleApproval
 
 ROOT: Path = Path(__file__).resolve().parents[1]
+CREWAI_DOCS: Path = ROOT / "docs" / "crewai"
 NATIVE_EXAMPLE_NAMES: tuple[str, ...] = (
     "agent_hooks.llm_hooks",
     "agent_hooks.tool_hooks",
@@ -72,6 +73,19 @@ def test_examples_are_separated_by_policy_source() -> None:
     }
     assert actual == expected
     assert {path.parent.name for path in actual} == {"agent_hooks", "acs"}
+
+
+def test_framework_guides_live_in_docs() -> None:
+    """Keep framework details in docs and the root README framework-neutral."""
+    readme = (ROOT / "README.md").read_text()
+    for guide in ("api.md", "crewai/README.md", "crewai/examples.md"):
+        assert (ROOT / "docs" / guide).is_file()
+        assert f"(docs/{guide})" in readme
+    assert "respect_context_window" not in readme
+    assert "CrewAIAdapter(" not in readme
+    assert not (ROOT / "examples" / "crewai" / "README.md").exists()
+    for package in ("core", "crewai"):
+        assert (ROOT / "packages" / package / "README.md").is_file()
 
 
 @pytest.fixture(autouse=True)
@@ -148,7 +162,20 @@ def test_example_source_is_simple_and_self_contained(example: str, max_lines: in
     assert runner_names == {"agent_control"}
     if example.startswith("acs."):
         assert "Path(__file__).parent" in text
+        assert "AcsInterceptor" in constructors
         assert not any(isinstance(node, ast.ClassDef) for node in tree.body)
+        assert not any(
+            isinstance(node, ast.ImportFrom) and node.module == "agent_control_spec"
+            for node in tree.body
+        )
+        assert all(
+            keyword.arg != "policy_file"
+            for node in ast.walk(tree)
+            if isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Name)
+            and node.func.id in {"with_agent_controls", "AgentPolicy"}
+            for keyword in node.keywords
+        )
     for node in ast.walk(tree):
         if (
             isinstance(node, ast.Call)
@@ -187,7 +214,7 @@ def test_acs_guide_shows_every_complete_policy_asset(filename: str) -> None:
     """Keep the documented YAML/Rego files identical to the shipped full bundle."""
     examples = ROOT / "examples" / "crewai"
     asset = (examples / "acs" / filename).read_text()
-    assert asset.strip() in (examples / "README.md").read_text()
+    assert asset.strip() in (CREWAI_DOCS / "examples.md").read_text()
 
 
 @pytest.fixture

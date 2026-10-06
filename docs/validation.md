@@ -1,5 +1,34 @@
 # Validation evidence
 
+## Explicit ACS interceptor examples - October 6, 2026 UTC
+
+The [ACS tool example](../examples/crewai/acs/tool_hooks.py) and
+[multi-agent LLM example](../examples/crewai/acs/multi_agent_llm_hooks.py) now
+construct the published `AcsInterceptor` explicitly and pass those objects
+through shared/per-agent interceptor bindings. Native Agent Hooks examples,
+YAML/Rego assets, and adapter implementation code remain unchanged.
+
+- **85 focused deterministic tests passed** after the wiring change.
+- **11 affected source/documentation checks passed** after the final import comments.
+- **4 required real-Qwen e2e cases passed**, with zero skips, in 87.63 seconds:
+  both ACS scripts ran as modules and as copied standalone files. The 12 unchanged
+  native-example cases were deliberately deselected.
+- Ruff lint/format and strict Pyright passed. ACS 0.4.0a4 lacks a typing marker;
+  only `reportMissingTypeStubs` is suppressed on its two local imports.
+  Constructor argument and interceptor compatibility checks remain enabled.
+- Both modules also imported successfully with the optional ACS module blocked.
+  The three related guides passed all 32 local link/heading-anchor checks.
+
+Fresh receipts record `qwen2.5:latest`, digest
+`845dbda0ea48ed749caafd9e6037047aa19acfcfd82e704d7ca97d631a0b697e`,
+Ollama 0.34.0, temperature 0, and a 256-token limit at the loopback endpoint.
+Each tool case made one real model request and was denied before tool execution;
+each multi-agent case made two requests and verified disjoint policy sessions.
+No model download or service startup was performed. This is affected-example
+evidence, not a new full-suite, all-platform, or production-release approval.
+The [dependency release blocker](../SECURITY.md#known-dependency-release-blocker)
+remains unchanged.
+
 ## Private source-checkpoint preflight - October 5, 2026
 
 The full local non-e2e suite passed **503 tests**, with the 16 model cases

@@ -23,6 +23,8 @@ def delete_file(path: str) -> str:
 
 def main() -> None:
     """Let the real model request a tool, then enforce its YAML/Rego control."""
+    from agent_control_spec import AcsInterceptor  # pyright: ignore[reportMissingTypeStubs]
+
     model = os.getenv("LOCAL_MODEL", "qwen2.5:latest")
     if ":" not in model:
         model += ":latest"
@@ -53,10 +55,12 @@ def main() -> None:
         agent=agent,
     )
     crew = Crew(agents=[agent], tasks=[task], process=Process.sequential, cache=False)
+    controls = Path(__file__).parent
+    policy = AcsInterceptor(str(controls / "tool_hooks.yaml"))
     agent_control = with_agent_controls(
         backend=Backend.CREWAI,
         runtime=crew,
-        policy_file=Path(__file__).parent / "tool_hooks.yaml",
+        interceptors=[policy],
     )
     try:
         agent_control.run(RunRequest())

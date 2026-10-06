@@ -17,6 +17,8 @@ from crewai.llms.providers.openai.completion import OpenAICompletion
 
 def main() -> None:
     """Run researcher then editor and verify their real per-agent verdicts."""
+    from agent_control_spec import AcsInterceptor  # pyright: ignore[reportMissingTypeStubs]
+
     model = os.getenv("LOCAL_MODEL", "qwen2.5:latest")
     if ":" not in model:
         model += ":latest"
@@ -66,14 +68,17 @@ def main() -> None:
         cache=False,
     )
     controls = Path(__file__).parent
+    shared_policy = AcsInterceptor(str(controls / "shared.yaml"))
+    researcher_policy = AcsInterceptor(str(controls / "researcher.yaml"))
+    editor_policy = AcsInterceptor(str(controls / "editor.yaml"))
     agent_control = with_agent_controls(
         backend=Backend.CREWAI,
         runtime=crew,
-        policy_file=controls / "shared.yaml",
+        interceptors=[shared_policy],
         agents={"researcher": researcher, "editor": editor},
         agent_policies=[
-            AgentPolicy("researcher", policy_file=controls / "researcher.yaml"),
-            AgentPolicy("editor", policy_file=controls / "editor.yaml"),
+            AgentPolicy("researcher", (researcher_policy,)),
+            AgentPolicy("editor", (editor_policy,)),
         ],
     )
     result = agent_control.run(RunRequest())

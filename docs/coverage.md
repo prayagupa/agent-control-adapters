@@ -117,7 +117,7 @@ the native-only source path imports no ACS module.
 
 ## Conformance claims
 
-CrewAI's native hook scenarios have [complete SDK-backed replacements](../examples/crewai):
+CrewAI's native hook scenarios have [complete SDK-backed replacements](crewai/examples.md):
 model-response sanitization, destructive-tool denial, pre-tool approval and
 agent-specific controls. Native hooks can swallow ordinary callback errors or
 let the agent continue after a tool denial; this adapter fails closed and makes

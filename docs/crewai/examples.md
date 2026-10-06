@@ -1,5 +1,8 @@
 # CrewAI controls using Python interceptors or ACS YAML/Rego
 
+See the [adapter guide](README.md) for installation, supported execution,
+and lifecycle requirements.
+
 These are complete, standalone replacements for CrewAI's official
 [execution-hook](https://docs.crewai.com/v1.15.23/en/learn/execution-hooks),
 [LLM-hook](https://docs.crewai.com/v1.15.23/en/learn/llm-hooks) and
@@ -20,16 +23,16 @@ examples.
 
 | Complete example | What it demonstrates |
 |---|---|
-| [agent_hooks/llm_hooks.py](agent_hooks/llm_hooks.py) | Replace the native response-sanitization hook with an SDK transform |
-| [agent_hooks/tool_hooks.py](agent_hooks/tool_hooks.py) | Replace the native destructive-tool hook with an SDK denial |
-| [agent_hooks/human_approval.py](agent_hooks/human_approval.py) | Replace the native pre-tool approval gate with an SDK approval resolver |
-| [agent_hooks/multi_agent_llm_hooks.py](agent_hooks/multi_agent_llm_hooks.py) | Enforce separate LLM response limits using trusted per-agent policy bindings |
-| [acs/tool_hooks.py](acs/tool_hooks.py) | The same destructive-tool control, configured with native ACS YAML/Rego |
-| [acs/multi_agent_llm_hooks.py](acs/multi_agent_llm_hooks.py) | Shared YAML and separate researcher/editor LLM response limits |
+| [agent_hooks/llm_hooks.py](../../examples/crewai/agent_hooks/llm_hooks.py) | Replace the native response-sanitization hook with an SDK transform |
+| [agent_hooks/tool_hooks.py](../../examples/crewai/agent_hooks/tool_hooks.py) | Replace the native destructive-tool hook with an SDK denial |
+| [agent_hooks/human_approval.py](../../examples/crewai/agent_hooks/human_approval.py) | Replace the native pre-tool approval gate with an SDK approval resolver |
+| [agent_hooks/multi_agent_llm_hooks.py](../../examples/crewai/agent_hooks/multi_agent_llm_hooks.py) | Enforce separate LLM response limits using trusted per-agent policy bindings |
+| [acs/tool_hooks.py](../../examples/crewai/acs/tool_hooks.py) | The same destructive-tool control, configured with native ACS YAML/Rego |
+| [acs/multi_agent_llm_hooks.py](../../examples/crewai/acs/multi_agent_llm_hooks.py) | Shared YAML and separate researcher/editor LLM response limits |
 
-Native Python policies live in `agent_hooks/`. ACS applications, YAML manifests
-and the Rego bundle live together in `acs/`. Both use an `agent_control` runner
-returned by `with_agent_controls`.
+Native Python policies live in `examples/crewai/agent_hooks/`. ACS applications,
+YAML manifests and the Rego bundle live together in `examples/crewai/acs/`.
+Both use an `agent_control` runner returned by `with_agent_controls`.
 
 ## Minimal customer change
 
@@ -57,7 +60,7 @@ and `create_adapter` remain exact compatibility aliases.
 The supported alpha profile still requires synchronous sequential execution,
 `respect_context_window=False`, and enough iterations for the task (`max_iter=3`
 in these examples). Unsupported native features are rejected, not silently
-disabled; see [coverage](../../docs/coverage.md).
+disabled; see [coverage](../coverage.md).
 
 ## Run the complete examples
 
@@ -110,22 +113,43 @@ Native SDK context IDs remain unchanged.
 
 ## ACS YAML/Rego controls
 
-The full Python applications are in [acs/tool_hooks.py](acs/tool_hooks.py) and
-[acs/multi_agent_llm_hooks.py](acs/multi_agent_llm_hooks.py). They retain the same native model,
-agents, tasks and execution call as their Python-policy counterparts. The policy
-source switch is just:
+The full Python applications are in [acs/tool_hooks.py](../../examples/crewai/acs/tool_hooks.py) and
+[acs/multi_agent_llm_hooks.py](../../examples/crewai/acs/multi_agent_llm_hooks.py). They retain the same native model,
+agents, tasks and execution call as their Python-policy counterparts. Each ACS
+script imports the published `AcsInterceptor` from `agent_control_spec` inside
+`main()`, so importing an example module does not require the optional runtime.
+The shared policy source switch is:
 
 ```diff
 - interceptors=[python_policy],
-+ policy_file=controls / "tool_hooks.yaml",
++ interceptors=[AcsInterceptor(str(controls / "tool_hooks.yaml"))],
 ```
 
-For an agent:
+For an agent, replace the policy object while keeping its trusted binding:
 
 ```diff
-- AgentPolicy("researcher", (researcher_policy,)),
-+ AgentPolicy("researcher", policy_file=controls / "researcher.yaml"),
+- researcher_policy = AgentTextLimit(max_characters=1600)
++ researcher_policy = AcsInterceptor(str(controls / "researcher.yaml"))
 ```
+
+The assignment remains `AgentPolicy("researcher", (researcher_policy,))`.
+The multi-agent file explicitly constructs separate shared, researcher, and
+editor interceptors. Constructor paths come from trusted sibling manifests,
+not model or request content. Native construction parses manifests before the
+adapter validates the Crew; it is outside the adapter's emission deadlines.
+Constructor errors propagate, and Rego bundles still load lazily.
+
+The shorter `policy_file=` convenience API remains available: replace
+`interceptors=[policy]` with `policy_file=controls / "tool_hooks.yaml"`, or use
+`AgentPolicy("researcher", policy_file=controls / "researcher.yaml")`.
+That path validates runtime and agent bindings before loading manifests and
+checks the supported ACS version. Explicit native construction uses the
+application's installed ACS runtime; these examples use the locked 0.4.0a4
+environment described above.
+
+ACS 0.4.0a4 does not ship a Python typing marker. The two imports suppress only
+Pyright's `reportMissingTypeStubs` diagnostic; constructor argument and
+interceptor compatibility checks remain enabled.
 
 Exactly one source is required per assignment. You can mix a native shared
 policy with agent YAML, or shared YAML with native agent policies. There is no
@@ -147,7 +171,7 @@ acs/
     controls.rego           Actual Rego code used by the manifests
 ```
 
-Complete [tool manifest](acs/tool_hooks.yaml):
+Complete [tool manifest](../../examples/crewai/acs/tool_hooks.yaml):
 
 ```yaml
 agent_control_specification_version: "0.5.0-alpha.1"
@@ -169,7 +193,7 @@ intervention_points:
   agent_shutdown: *check
 ```
 
-Complete [shared multi-agent manifest](acs/shared.yaml):
+Complete [shared multi-agent manifest](../../examples/crewai/acs/shared.yaml):
 
 ```yaml
 agent_control_specification_version: "0.5.0-alpha.1"
@@ -191,7 +215,7 @@ intervention_points:
   agent_shutdown: *check
 ```
 
-Complete [researcher manifest](acs/researcher.yaml):
+Complete [researcher manifest](../../examples/crewai/acs/researcher.yaml):
 
 ```yaml
 agent_control_specification_version: "0.5.0-alpha.1"
@@ -209,7 +233,7 @@ intervention_points:
   post_tool_call: *check
 ```
 
-Complete [editor manifest](acs/editor.yaml):
+Complete [editor manifest](../../examples/crewai/acs/editor.yaml):
 
 ```yaml
 agent_control_specification_version: "0.5.0-alpha.1"
@@ -227,7 +251,7 @@ intervention_points:
   post_tool_call: *check
 ```
 
-Complete [Rego bundle](acs/policy/controls.rego):
+Complete [Rego bundle](../../examples/crewai/acs/policy/controls.rego):
 
 ```rego
 package controls
@@ -303,7 +327,7 @@ loading/compilation is lazy, so a broken later policy may fail after prior
 effects. These examples use the tested `agent-control-spec==0.4.0a4` Rego
 profile. Its Cedar engine expects legacy metadata and fails closed here.
 YAML `approval` resolver settings are not wired into host authority; use the
-explicit SDK resolver. See [coverage](../../docs/coverage.md#acs-policy-source)
+explicit SDK resolver. See [coverage](../coverage.md#acs-policy-source)
 and [security](../../SECURITY.md#acs-configuration-is-trusted-code) for native
 network, credential, deadline, pool, payload and platform limitations.
 
