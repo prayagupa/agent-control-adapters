@@ -6,10 +6,10 @@ from pathlib import Path
 from typing import cast
 
 import pytest
-from agent_hooks_adapters import NativeRuntime
-from agent_hooks_langchain import LangChainControls
-from agent_hooks_langchain.portable import create_backend
-from agent_hooks_langgraph._inspection import attribute
+from agent_control_adapters import NativeRuntime
+from agent_control_langchain import LangChainControls
+from agent_control_langchain.portable import create_backend
+from agent_control_langgraph._inspection import attribute
 from langchain.agents import create_agent  # pyright: ignore[reportUnknownVariableType]
 from langchain.agents.middleware import AgentMiddleware
 from langchain_adapter_test_helpers import chain_case

@@ -3,9 +3,9 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "agent-hooks-adapters"
+name = "agent-control-adapters"
 version = "0.1.0a1"
-description = "Framework-neutral execution contracts for agent-hooks adapters"
+description = "Framework-neutral execution contracts for agent control adapters"
 readme = "README.md"
 license = "MIT"
 license-files = ["LICENSE"]
@@ -28,7 +28,7 @@ Issues = "https://github.com/prayagupa/agent-control-adapters/issues"
 
 [project.optional-dependencies]
 acs = ["agent-control-spec==0.4.0a4"]
-crewai = ["agent-hooks-crewai==0.1.0a1"]
+crewai = ["agent-control-crewai==0.1.0a1"]
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/agent_hooks_adapters"]
+packages = ["src/agent_control_adapters"]

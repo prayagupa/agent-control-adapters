@@ -7,6 +7,7 @@ from concurrent.futures import ThreadPoolExecutor
 from typing import Any
 
 import pytest
+from agent_control_crewai import AdapterBlocked, AdapterCleanupError, AgentPolicy, CrewAIAdapter
 from agent_hooks import (
     ALLOW,
     AgentContext,
@@ -18,7 +19,6 @@ from agent_hooks import (
     Transform,
     Verdict,
 )
-from agent_hooks_crewai import AdapterBlocked, AdapterCleanupError, AgentPolicy, CrewAIAdapter
 from crewai.hooks.contexts import InputContext, OutputContext
 from crewai.hooks.dispatch import InterceptionPoint, dispatch, get_scoped_hooks, scoped_hooks
 from crewai.hooks.llm_hooks import LLMCallHookContext

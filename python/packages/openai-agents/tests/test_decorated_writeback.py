@@ -5,8 +5,8 @@ from __future__ import annotations
 import asyncio
 
 import pytest
+from agent_control_adapters import AdapterBlocked, RunRequest
 from agent_hooks import ALLOW, Decision, Transform, Verdict
-from agent_hooks_adapters import AdapterBlocked, RunRequest
 from agents import function_tool
 from openai_adapter_test_helpers import Policy, controlled, native_case, tool_response
 

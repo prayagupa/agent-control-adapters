@@ -10,7 +10,7 @@ import sys
 from pathlib import Path
 
 import pytest
-from agent_hooks_adapters.json import object_value
+from agent_control_adapters.json import object_value
 
 pytestmark = pytest.mark.e2e
 _EXAMPLES = Path(__file__).resolve().parents[4] / "examples" / "google-adk"

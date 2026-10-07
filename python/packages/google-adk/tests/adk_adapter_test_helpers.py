@@ -6,8 +6,8 @@ from collections.abc import AsyncGenerator, Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 
+from agent_control_adapters import AgentPolicy, AsyncAdapter, Backend, with_agent_controls
 from agent_hooks import ALLOW, AgentContext, Decision, Interceptor, Transform, Verdict
-from agent_hooks_adapters import AgentPolicy, AsyncAdapter, Backend, with_agent_controls
 from google.adk.agents import LlmAgent
 from google.adk.models.base_llm import BaseLlm
 from google.adk.models.llm_request import LlmRequest

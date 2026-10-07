@@ -11,11 +11,11 @@ from typing import Literal, Protocol, cast
 
 import pytest
 from agent_adapter_conformance import INVALID_PROMPTS, assert_governed_success, make_rego_manifest
+from agent_control_adapters import AgentPolicy, AsyncAdapter, RunRequest, RunResult
+from agent_control_adapters.errors import AdapterBlocked
+from agent_control_langgraph._inspection import attribute, native_builder, native_nodes
+from agent_control_langgraph._scope import GraphAdapter, NativeScope
 from agent_hooks import AgentContext, Decision, Interceptor, Transform, Verdict
-from agent_hooks_adapters import AgentPolicy, AsyncAdapter, RunRequest, RunResult
-from agent_hooks_adapters.errors import AdapterBlocked
-from agent_hooks_langgraph._inspection import attribute, native_builder, native_nodes
-from agent_hooks_langgraph._scope import GraphAdapter, NativeScope
 from langchain_core.callbacks import AsyncCallbackManagerForLLMRun
 from langchain_core.messages import AIMessage, BaseMessage
 from langchain_core.outputs import ChatResult
@@ -404,7 +404,7 @@ def test_async_cancel_drains_and_preserves_loop(
 
 
 def test_native_deadline_drains(family_case: FamilyCase, monkeypatch: pytest.MonkeyPatch) -> None:
-    from agent_hooks_adapters import runtime as shared_runtime
+    from agent_control_adapters import runtime as shared_runtime
 
     monkeypatch.setattr(shared_runtime, "_NATIVE_RUN_TIMEOUT", 0.05)
 
@@ -432,7 +432,7 @@ def test_single_use_sync_async_race(
     from langchain_core.callbacks import CallbackManagerForLLMRun
 
     entered, release = threading.Event(), threading.Event()
-    from agent_hooks_langgraph._inspection import attribute
+    from agent_control_langgraph._inspection import attribute
 
     class NativeGenerate(Protocol):
         def __call__(

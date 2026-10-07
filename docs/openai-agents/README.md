@@ -1,6 +1,6 @@
 # OpenAI Agents SDK Python controls
 
-`agent-hooks-openai-agents` installs `agent_hooks_openai_agents` independently.
+`agent-control-openai-agents` installs `agent_control_openai_agents` independently.
 The supported version is **openai-agents 0.23.1**, using OpenAI Python **3.24.0**
 for the examples. Do not include this project in the root CrewAI/OpenAI-2
 dependency resolution.

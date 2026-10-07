@@ -11,7 +11,7 @@ framework adapter depends on its native framework and a shared control contract;
 the shared contract must not depend on framework types. Backend selection is
 explicit and closed, with no discovery or fallback.
 
-Python currently packages `agent-hooks-adapters` separately from its six
+Python currently packages `agent-control-adapters` separately from its six
 framework adapters. `with_agent_controls`, `with_agent_hooks` and `create_adapter`
 are the exact same function. Future language implementations should preserve
 the behavior below with their own native typed interfaces.

@@ -20,7 +20,7 @@ flowchart TB
 
 | Layer | Responsibility |
 |---|---|
-| `agent-hooks-adapters` | Backend selection, policy assignments, JSON contracts, errors, shared runtime primitives |
+| `agent-control-adapters` | Backend selection, policy assignments, JSON contracts, errors, shared runtime primitives |
 | Framework package | Admission, native seams, identity ownership, validated write-back and native cleanup |
 | Agent Hooks SDK | Interceptor composition, decisions, approvals and audit records |
 | ACS | Manifest loading and native policy evaluation |

@@ -11,11 +11,10 @@ from textwrap import dedent
 from types import ModuleType
 from typing import Literal
 
-import agent_hooks_adapters.acs as acs
-import agent_hooks_adapters.factory as factory
+import agent_control_adapters.acs as acs
+import agent_control_adapters.factory as factory
 import pytest
-from agent_hooks import ALLOW, AgentContext, InterceptionRecord, Verdict
-from agent_hooks_adapters import (
+from agent_control_adapters import (
     ACSUnavailableError,
     Adapter,
     AdapterBlocked,
@@ -30,6 +29,7 @@ from agent_hooks_adapters import (
     with_agent_controls,
     with_agent_hooks,
 )
+from agent_hooks import ALLOW, AgentContext, InterceptionRecord, Verdict
 
 
 class AllowPolicy:
@@ -280,11 +280,11 @@ def test_backend_enum_contains_only_implemented_backends() -> None:
 @pytest.mark.parametrize(
     ("backend", "namespace"),
     [
-        (Backend.GOOGLE_ADK, "agent_hooks_google_adk"),
-        (Backend.LANGCHAIN, "agent_hooks_langchain"),
-        (Backend.LANGGRAPH, "agent_hooks_langgraph"),
-        (Backend.OPENAI_AGENTS, "agent_hooks_openai_agents"),
-        (Backend.MAF, "agent_hooks_maf"),
+        (Backend.GOOGLE_ADK, "agent_control_google_adk"),
+        (Backend.LANGCHAIN, "agent_control_langchain"),
+        (Backend.LANGGRAPH, "agent_control_langgraph"),
+        (Backend.OPENAI_AGENTS, "agent_control_openai_agents"),
+        (Backend.MAF, "agent_control_maf"),
     ],
 )
 def test_factory_selects_only_the_requested_async_backend(
@@ -346,12 +346,12 @@ def test_factory_selects_only_the_requested_async_backend(
 @pytest.mark.parametrize(
     ("backend", "namespace"),
     [
-        (Backend.CREWAI, "agent_hooks_crewai"),
-        (Backend.GOOGLE_ADK, "agent_hooks_google_adk"),
-        (Backend.LANGCHAIN, "agent_hooks_langchain"),
-        (Backend.LANGGRAPH, "agent_hooks_langgraph"),
-        (Backend.OPENAI_AGENTS, "agent_hooks_openai_agents"),
-        (Backend.MAF, "agent_hooks_maf"),
+        (Backend.CREWAI, "agent_control_crewai"),
+        (Backend.GOOGLE_ADK, "agent_control_google_adk"),
+        (Backend.LANGCHAIN, "agent_control_langchain"),
+        (Backend.LANGGRAPH, "agent_control_langgraph"),
+        (Backend.OPENAI_AGENTS, "agent_control_openai_agents"),
+        (Backend.MAF, "agent_control_maf"),
     ],
 )
 @pytest.mark.parametrize("missing", ["backend", "dependency", "internal"])
@@ -444,7 +444,7 @@ def test_missing_acs_distribution_is_actionable(
         raise PackageNotFoundError(name)
 
     monkeypatch.setattr(acs, "version", missing)
-    with pytest.raises(ACSUnavailableError, match=r"agent-hooks-adapters\[acs\]") as caught:
+    with pytest.raises(ACSUnavailableError, match=r"agent-control-adapters\[acs\]") as caught:
         acs.load_acs_policy(tmp_path / "policy.yaml")
     assert isinstance(caught.value.__cause__, PackageNotFoundError)
 
@@ -512,9 +512,9 @@ def test_core_contracts_and_unsupported_factory_do_not_import_native_backends() 
         class BlockNativeBackend(MetaPathFinder):
             def find_spec(self, fullname, path=None, target=None):
                 if fullname.split(".", 1)[0] in {
-                    "crewai", "agent_hooks_crewai", "agent_hooks_maf",
-                    "agent_hooks_google_adk", "agent_hooks_langchain",
-                    "agent_hooks_langgraph", "agent_hooks_openai_agents",
+                    "crewai", "agent_control_crewai", "agent_control_maf",
+                    "agent_control_google_adk", "agent_control_langchain",
+                    "agent_control_langgraph", "agent_control_openai_agents",
                     "agent_framework", "agent_control_spec", "google",
                     "langchain", "langchain_core", "langgraph", "agents", "openai",
                 }:
@@ -523,7 +523,7 @@ def test_core_contracts_and_unsupported_factory_do_not_import_native_backends() 
 
         sys.meta_path.insert(0, BlockNativeBackend())
         from agent_hooks import ALLOW
-        from agent_hooks_adapters import (
+        from agent_control_adapters import (
             AgentPolicy, Backend, RunRequest, RunResult, UnsupportedBackendError,
             create_adapter, with_agent_controls, with_agent_hooks,
         )
@@ -548,9 +548,9 @@ def test_core_contracts_and_unsupported_factory_do_not_import_native_backends() 
                 raise AssertionError("non-enum backend was accepted")
         assert not any(
             name.split(".", 1)[0] in {
-                "crewai", "agent_hooks_crewai", "agent_control_spec", "agent_hooks_maf",
-                "agent_hooks_google_adk", "agent_hooks_langchain", "agent_hooks_langgraph",
-                "agent_hooks_openai_agents", "agent_framework", "google", "langchain",
+                "crewai", "agent_control_crewai", "agent_control_spec", "agent_control_maf",
+                "agent_control_google_adk", "agent_control_langchain", "agent_control_langgraph",
+                "agent_control_openai_agents", "agent_framework", "google", "langchain",
                 "langchain_core", "langgraph", "agents", "openai",
             } for name in sys.modules
         )

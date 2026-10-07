@@ -9,9 +9,9 @@ from pathlib import Path
 import pytest
 from adk_adapter_test_helpers import Allow, controlled, native_case
 from agent_adapter_conformance import INVALID_PROMPTS
-from agent_hooks_adapters import AgentPolicy, RunRequest
-from agent_hooks_google_adk._profile import profile
-from agent_hooks_google_adk.portable import create_backend
+from agent_control_adapters import AgentPolicy, RunRequest
+from agent_control_google_adk._profile import profile
+from agent_control_google_adk.portable import create_backend
 from google.adk.agents import (
     BaseAgent,
     LlmAgent,

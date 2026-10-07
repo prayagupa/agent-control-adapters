@@ -11,6 +11,7 @@ from unittest.mock import patch
 
 import httpx
 import pytest
+from agent_control_adapters.acs import load_acs_policy
 from agent_hooks import (
     AgentContextBuilder,
     ApprovalOutcome,
@@ -18,7 +19,6 @@ from agent_hooks import (
     InterceptionPoint,
     Verdict,
 )
-from agent_hooks_adapters.acs import load_acs_policy
 from crewai.llms.providers.openai.completion import OpenAICompletion
 
 from examples.crewai.acs import multi_agent_llm_hooks as acs_multi_agent_llm_hooks

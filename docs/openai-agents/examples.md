@@ -83,8 +83,8 @@ or fixated model answers.
 ```bash
 timeout 720 env LOCAL_MODEL_REQUIRED=1 OPENAI_AGENTS_MODEL_SLOT=operator-exclusive \
 OPENAI_AGENTS_GATE_EVIDENCE=1 \
-CORE_WHEEL=/your/wheels/agent_hooks_adapters-0.1.0a1-py3-none-any.whl \
-ADAPTER_WHEEL=/your/wheels/agent_hooks_openai_agents-0.1.0a1-py3-none-any.whl \
+CORE_WHEEL=/your/wheels/agent_control_adapters-0.1.0a1-py3-none-any.whl \
+ADAPTER_WHEEL=/your/wheels/agent_control_openai_agents-0.1.0a1-py3-none-any.whl \
 uv run --directory python/packages/openai-agents --no-sync pytest \
   -c pyproject.toml --rootdir . -m e2e
 ```

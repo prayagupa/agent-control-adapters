@@ -7,16 +7,16 @@ import asyncio
 import json
 
 import httpx2
-from agent_hooks import AgentContext, Verdict
-from agent_hooks_adapters import (
+from agent_control_adapters import (
     AdapterBlocked,
     Backend,
     NativeRuntime,
     RunRequest,
     with_agent_controls,
 )
-from agent_hooks_langgraph import LangGraphControls
-from agent_hooks_langgraph.example_telemetry import ExampleTelemetry
+from agent_control_langgraph import LangGraphControls
+from agent_control_langgraph.example_telemetry import ExampleTelemetry
+from agent_hooks import AgentContext, Verdict
 from langchain_openai import ChatOpenAI
 from langgraph.graph import (  # pyright: ignore[reportMissingTypeStubs]
     END,

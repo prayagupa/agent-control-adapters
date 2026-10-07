@@ -1,4 +1,4 @@
-agent-hooks-adapters==0.1.0a1
-agent-hooks-openai-agents==0.1.0a1
+agent-control-adapters==0.1.0a1
+agent-control-openai-agents==0.1.0a1
 openai-agents==0.23.1
 openai==3.24.0

@@ -8,10 +8,10 @@ from pathlib import Path
 
 import pytest
 from agent_adapter_conformance import INVALID_PROMPTS
-from agent_hooks_adapters import AdapterBlocked, AgentPolicy, RunRequest
-from agent_hooks_adapters.json import JSON
-from agent_hooks_openai_agents._model import GovernedModel
-from agent_hooks_openai_agents._profile import (
+from agent_control_adapters import AdapterBlocked, AgentPolicy, RunRequest
+from agent_control_adapters.json import JSON
+from agent_control_openai_agents._model import GovernedModel
+from agent_control_openai_agents._profile import (
     FUNCTION_TOOL_FIELDS,
     profile,
     validate_arguments,

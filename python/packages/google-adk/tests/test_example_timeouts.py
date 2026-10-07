@@ -8,7 +8,7 @@ from pathlib import Path
 
 import httpx
 import pytest
-from agent_hooks_adapters.json import JSON, object_value
+from agent_control_adapters.json import JSON, object_value
 
 _EXAMPLES = Path(__file__).resolve().parents[4] / "examples" / "google-adk"
 

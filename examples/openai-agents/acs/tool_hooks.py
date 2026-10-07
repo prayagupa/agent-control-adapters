@@ -8,8 +8,8 @@ import json
 from pathlib import Path
 
 import httpx2
-from agent_hooks_adapters import AdapterBlocked, Backend, RunRequest, with_agent_controls
-from agent_hooks_openai_agents import OpenAIAgentsAdapter
+from agent_control_adapters import AdapterBlocked, Backend, RunRequest, with_agent_controls
+from agent_control_openai_agents import OpenAIAgentsAdapter
 from agents import Agent, ModelSettings, OpenAIChatCompletionsModel, function_tool
 from openai import AsyncOpenAI
 

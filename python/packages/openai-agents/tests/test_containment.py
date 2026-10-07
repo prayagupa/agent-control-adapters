@@ -5,10 +5,10 @@ from __future__ import annotations
 import asyncio
 
 import pytest
-from agent_hooks_adapters import RunRequest
-from agent_hooks_adapters import runtime as shared_runtime
-from agent_hooks_openai_agents import adapter as native_adapter
-from agent_hooks_openai_agents._codec import raw_arguments
+from agent_control_adapters import RunRequest
+from agent_control_adapters import runtime as shared_runtime
+from agent_control_openai_agents import adapter as native_adapter
+from agent_control_openai_agents._codec import raw_arguments
 from agents.tool_context import ToolContext
 from openai_adapter_test_helpers import Policy, controlled, native_case, scope_of
 

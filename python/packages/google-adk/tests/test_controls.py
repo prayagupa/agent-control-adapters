@@ -16,9 +16,9 @@ from adk_adapter_test_helpers import (
     tool_response,
 )
 from agent_adapter_conformance import assert_governed_success
+from agent_control_adapters import AdapterBlocked, AgentPolicy, RunRequest
+from agent_control_adapters.json import object_value
 from agent_hooks import ALLOW, AgentContext, Decision, Verdict
-from agent_hooks_adapters import AdapterBlocked, AgentPolicy, RunRequest
-from agent_hooks_adapters.json import object_value
 from google.adk.events import Event
 from google.adk.models.llm_request import LlmRequest
 from google.adk.models.llm_response import LlmResponse

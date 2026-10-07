@@ -1,4 +1,4 @@
-agent-hooks-langgraph==0.1.0a1
+agent-control-langgraph==0.1.0a1
 langchain-openai==1.6.7
 openai==3.24.0
 httpx2==2.13.1

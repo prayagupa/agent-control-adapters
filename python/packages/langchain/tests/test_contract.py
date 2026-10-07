@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import pytest
-from agent_hooks_langchain.portable import create_backend
+from agent_control_langchain.portable import create_backend
 from graph_adapter_contract_vectors import (
     FamilyCase,
 )

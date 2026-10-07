@@ -6,10 +6,10 @@ from pathlib import Path
 from typing import cast
 
 import pytest
-from agent_hooks_adapters import NativeRuntime
-from agent_hooks_langgraph import LangGraphControls
-from agent_hooks_langgraph._inspection import attribute
-from agent_hooks_langgraph.portable import create_backend
+from agent_control_adapters import NativeRuntime
+from agent_control_langgraph import LangGraphControls
+from agent_control_langgraph._inspection import attribute
+from agent_control_langgraph.portable import create_backend
 from langgraph.graph import (  # pyright: ignore[reportMissingTypeStubs]
     END,
     START,
@@ -221,7 +221,7 @@ def test_closed_tool_route_destination_must_match_actual_tools(tmp_path: Path) -
 
 
 def test_actor_cap_exact() -> None:
-    from agent_hooks_adapters.runtime import validate_topology
+    from agent_control_adapters.runtime import validate_topology
 
     validate_topology(actors=16, nodes=16, edges=64)
     for counts in ((17, 16, 64), (16, 17, 64), (16, 16, 65)):

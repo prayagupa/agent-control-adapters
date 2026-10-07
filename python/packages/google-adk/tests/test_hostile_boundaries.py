@@ -14,9 +14,9 @@ from adk_adapter_test_helpers import (
     native_case,
     text_response,
 )
-from agent_hooks_adapters import AdapterBlocked, AdapterCleanupError, RunRequest
-from agent_hooks_adapters.runtime import NativeTaskOwner, RunBudget
-from agent_hooks_google_adk._profile import native_field, profile
+from agent_control_adapters import AdapterBlocked, AdapterCleanupError, RunRequest
+from agent_control_adapters.runtime import NativeTaskOwner, RunBudget
+from agent_control_google_adk._profile import native_field, profile
 from google.adk.agents import LlmAgent
 from google.adk.models.llm_request import LlmRequest
 from google.adk.models.llm_response import LlmResponse
@@ -103,7 +103,7 @@ def test_resistant_actual_native_model_remains_owned_through_bounded_drain(
     monkeypatch: pytest.MonkeyPatch,
     second_cancel: bool,
 ) -> None:
-    monkeypatch.setattr("agent_hooks_adapters.runtime._NATIVE_CLEANUP_TIMEOUT", 0.04)
+    monkeypatch.setattr("agent_control_adapters.runtime._NATIVE_CLEANUP_TIMEOUT", 0.04)
 
     async def scenario() -> None:
         entered, cancelled, release, exited = (

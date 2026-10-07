@@ -1,4 +1,4 @@
-# agent-hooks-langgraph
+# agent-control-langgraph
 
 Native, single-use LangGraph controls. The application builds and owns its graph,
 model, tools, clients, and event loop.

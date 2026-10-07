@@ -1,11 +1,11 @@
 # LangChain adapter
 
-`agent-hooks-langchain` governs a native `create_agent` graph using one concrete
-controls middleware. Namespace: `agent_hooks_langchain`. Pins: LangChain
+`agent-control-langchain` governs a native `create_agent` graph using one concrete
+controls middleware. Namespace: `agent_control_langchain`. Pins: LangChain
 **1.4.3**, core **1.6.6**, LangGraph **1.2.13**, prebuilt **1.1.0**, optional
 ACS **0.4.0a4**.
 
-It depends on [agent-hooks-langgraph](../langgraph/README.md) for shared native
+It depends on [agent-control-langgraph](../langgraph/README.md) for shared native
 message/tool codecs and graph proof. Dependency direction is LangChain ->
 LangGraph; standalone LangGraph does not require top-level LangChain or CrewAI.
 

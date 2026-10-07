@@ -1,4 +1,4 @@
-# agent-hooks-crewai
+# agent-control-crewai
 
 Execution-scoped Agent Hooks and ACS integration for CrewAI.
 

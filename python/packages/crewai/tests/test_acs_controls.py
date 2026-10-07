@@ -12,6 +12,16 @@ from pathlib import Path
 from typing import cast
 
 import pytest
+from agent_control_adapters import (
+    Adapter,
+    AdapterBlocked,
+    AgentPolicy,
+    Backend,
+    RunRequest,
+    with_agent_controls,
+)
+from agent_control_adapters.acs import load_acs_policy
+from agent_control_crewai import CrewAIAdapter, portable
 from agent_hooks import (
     ALLOW,
     AgentContext,
@@ -25,16 +35,6 @@ from agent_hooks import (
     Transform,
     Verdict,
 )
-from agent_hooks_adapters import (
-    Adapter,
-    AdapterBlocked,
-    AgentPolicy,
-    Backend,
-    RunRequest,
-    with_agent_controls,
-)
-from agent_hooks_adapters.acs import load_acs_policy
-from agent_hooks_crewai import CrewAIAdapter, portable
 from crewai import Agent, Crew, Task
 from crewai.tools import tool
 from crewai_adapter_test_helpers import NetworkStub, Policy, make_crew, tool_calls

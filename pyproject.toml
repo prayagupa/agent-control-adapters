@@ -1,9 +1,9 @@
 [project]
-name = "agent-hooks-adapters-workspace"
+name = "agent-control-adapters-workspace"
 version = "0.1.0"
-description = "Development workspace for independently packaged agent-hooks adapters"
+description = "Development workspace for independently packaged agent control adapters"
 requires-python = ">=3.11,<3.14"
-dependencies = ["agent-hooks-crewai"]
+dependencies = ["agent-control-crewai"]
 
 [tool.uv]
 package = false
@@ -24,8 +24,8 @@ exclude = [
 ]
 
 [tool.uv.sources]
-agent-hooks-adapters = { workspace = true }
-agent-hooks-crewai = { workspace = true }
+agent-control-adapters = { workspace = true }
+agent-control-crewai = { workspace = true }
 
 [dependency-groups]
 acs = ["agent-control-spec==0.4.0a4"]

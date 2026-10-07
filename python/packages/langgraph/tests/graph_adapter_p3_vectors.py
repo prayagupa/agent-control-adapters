@@ -10,12 +10,12 @@ from typing import Literal
 
 import pytest
 from agent_adapter_conformance import assert_governed_success, make_rego_manifest
+from agent_control_adapters import AdapterBlocked, RunRequest
+from agent_control_adapters import runtime as shared_runtime
+from agent_control_adapters.codecs import wire_equal
+from agent_control_adapters.json import JSON
+from agent_control_adapters.runtime import NativeTaskOwner
 from agent_hooks import Decision
-from agent_hooks_adapters import AdapterBlocked, RunRequest
-from agent_hooks_adapters import runtime as shared_runtime
-from agent_hooks_adapters.codecs import wire_equal
-from agent_hooks_adapters.json import JSON
-from agent_hooks_adapters.runtime import NativeTaskOwner
 from graph_adapter_contract_vectors import FamilyCase, Mode, execute
 from langchain_core.callbacks import AsyncCallbackManagerForLLMRun
 from langchain_core.messages import AIMessage, BaseMessage, ToolMessage
@@ -188,7 +188,7 @@ def test_actual_native_resistant_retention_and_repeated_cleanup(
 
         monkeypatch.setattr(NativeTransport, "_agenerate", resistant)
         adapter = family_case.adapter(max_records=8)
-        from agent_hooks_langgraph._inspection import attribute
+        from agent_control_langgraph._inspection import attribute
 
         owner = attribute(adapter, "_owner")
         assert isinstance(owner, NativeTaskOwner)

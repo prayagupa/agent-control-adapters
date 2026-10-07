@@ -95,9 +95,9 @@ def copied_environment(backend: BackendName, source: SourceName, directory: Path
     if not wheel_setting:
         raise RuntimeError("Required copy gate needs the actual built ADAPTER_WHEELHOUSE")
     wheelhouse = Path(wheel_setting).resolve(strict=True)
-    distributions = ["agent_hooks_adapters", "agent_hooks_langgraph"]
+    distributions = ["agent_control_adapters", "agent_control_langgraph"]
     if backend == "langchain":
-        distributions.append("agent_hooks_langchain")
+        distributions.append("agent_control_langchain")
     products: list[str] = []
     for name in distributions:
         wheels = list(wheelhouse.glob(f"{name}-0.1.0a1-*.whl"))
@@ -188,8 +188,8 @@ def run_example(
             "-c",
             "import importlib,importlib.metadata as m,json,pathlib;"
             "versions={d.metadata['Name']:d.version for d in m.distributions()};"
-            "names=['agent_hooks_adapters','agent_hooks_langgraph']"
-            + ("+['agent_hooks_langchain'];" if backend == "langchain" else ";")
+            "names=['agent_control_adapters','agent_control_langgraph']"
+            + ("+['agent_control_langchain'];" if backend == "langchain" else ";")
             + "print(json.dumps({'versions':versions,'origins':"
             "{name:str(pathlib.Path(importlib.import_module(name).__file__).resolve()) "
             "for name in names},'direct_urls':{name:m.distribution(name.replace('_','-'))"

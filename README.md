@@ -43,23 +43,24 @@ framework configuration, and complete runnable examples:
 
 | Framework | Adapter package | Controls | Execution | Documentation |
 |---|---|---|---|---|
-| CrewAI | `agent-hooks-crewai` | Agent Hooks or ACS | Sync | [Adapter guide](docs/crewai/README.md) / [Complete examples](docs/crewai/examples.md) |
-| Google ADK | `agent-hooks-google-adk` | Agent Hooks or ACS | Async | [Adapter guide](docs/google-adk/README.md) |
-| LangChain | `agent-hooks-langchain` | Agent Hooks or ACS | Native sync / async | [Adapter guide](docs/langchain/README.md) |
-| LangGraph | `agent-hooks-langgraph` | Agent Hooks or ACS | Native sync / async | [Adapter guide](docs/langgraph/README.md) |
-| OpenAI Agents SDK | `agent-hooks-openai-agents` | Agent Hooks or ACS | Async | [Adapter guide](docs/openai-agents/README.md) |
-| Microsoft Agent Framework | `agent-hooks-maf` | ACS only; native middleware | Async | [Adapter guide](docs/maf/README.md) |
+| CrewAI | `agent-control-crewai` | Agent Hooks or ACS | Sync | [Adapter guide](docs/crewai/README.md) / [Complete examples](docs/crewai/examples.md) |
+| Google ADK | `agent-control-google-adk` | Agent Hooks or ACS | Async | [Adapter guide](docs/google-adk/README.md) |
+| LangChain | `agent-control-langchain` | Agent Hooks or ACS | Native sync / async | [Adapter guide](docs/langchain/README.md) |
+| LangGraph | `agent-control-langgraph` | Agent Hooks or ACS | Native sync / async | [Adapter guide](docs/langgraph/README.md) |
+| OpenAI Agents SDK | `agent-control-openai-agents` | Agent Hooks or ACS | Async | [Adapter guide](docs/openai-agents/README.md) |
+| Microsoft Agent Framework | `agent-control-maf` | ACS only; native middleware | Async | [Adapter guide](docs/maf/README.md) |
 
 Each adapter has an explicit supported execution profile; review its guide and
 [coverage](docs/coverage.md) before using it for enforcement. Use separate
 dependency environments for the framework adapters. Their pinned dependency
 closures are not compatible with an umbrella installation.
 
-The shared `agent-hooks-adapters` package provides backend selection, policy
+The shared `agent-control-adapters` package provides backend selection, policy
 assignments, run requests/results, and common errors. See the
 [shared API reference](docs/api.md) for contracts and compatibility aliases.
-Distribution and Python import names retain their `agent-hooks` / `agent_hooks`
-prefixes.
+Distribution names use `agent-control-*`; Python imports use `agent_control_*`.
+Earlier alpha `agent-hooks-*` / `agent_hooks_*` product names are replaced, not
+compatibility aliases. The external `agent-hooks-sdk` / `agent_hooks` is unchanged.
 
 Python source packages live in [`python/packages/`](python/packages/), leaving
 room for future language-specific implementations. The root workspace manages

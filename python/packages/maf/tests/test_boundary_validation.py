@@ -8,9 +8,9 @@ from pathlib import Path
 
 import pytest
 from agent_adapter_conformance import make_rego_manifest
+from agent_control_adapters import AdapterBlocked, RunRequest
 from agent_framework import ChatResponse, Content, Message
 from agent_hooks.exceptions import InterceptionBlocked
-from agent_hooks_adapters import AdapterBlocked, RunRequest
 from maf_adapter_test_helpers import controlled, native_case
 
 

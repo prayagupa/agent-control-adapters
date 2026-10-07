@@ -8,10 +8,10 @@ from pathlib import Path
 from typing import cast
 
 import pytest
+from agent_control_adapters import AgentPolicy, NativeRuntime
+from agent_control_adapters import bindings as bindings_module
+from agent_control_adapters.bindings import prepare_controls
 from agent_hooks import ALLOW, AgentContext, Interceptor, Verdict
-from agent_hooks_adapters import AgentPolicy, NativeRuntime
-from agent_hooks_adapters import bindings as bindings_module
-from agent_hooks_adapters.bindings import prepare_controls
 
 
 class Allow:

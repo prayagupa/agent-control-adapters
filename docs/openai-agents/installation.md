@@ -15,7 +15,7 @@ uv run --directory python/packages/openai-agents --no-sync pytest \
 ```
 
 The package has its own lock and `.venv`, and uses editable local core
-`agent-hooks-adapters==0.1.0a1` from `../core`. The optional `acs` extra pins
+`agent-control-adapters==0.1.0a1` from `../core`. The optional `acs` extra pins
 `agent-control-spec==0.4.0a4`. Neither selects the core `crewai` extra.
 JSON Schema 4.26.0 validates tool arguments; it is not a governance evaluator.
 
@@ -33,8 +33,8 @@ rather than assuming either alpha is available on PyPI:
 uv venv --python 3.13 /your/isolated/example-env
 uv pip install --python /your/isolated/example-env/bin/python \
   --index-url https://pypi.org/simple \
-  /your/wheels/agent_hooks_adapters-0.1.0a1-py3-none-any.whl \
-  '/your/wheels/agent_hooks_openai_agents-0.1.0a1-py3-none-any.whl[acs]' \
+  /your/wheels/agent_control_adapters-0.1.0a1-py3-none-any.whl \
+  '/your/wheels/agent_control_openai_agents-0.1.0a1-py3-none-any.whl[acs]' \
   openai==3.24.0
 ```
 

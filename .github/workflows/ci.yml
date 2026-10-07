@@ -26,8 +26,8 @@ jobs:
       - run: uv run --no-sync ruff format --check python/packages/core python/packages/crewai examples/crewai tests
       - run: uv run --no-sync pyright
       - run: uv run --no-sync pytest -m 'not e2e'
-      - run: uv build --package agent-hooks-crewai
-      - run: uv build --package agent-hooks-adapters
+      - run: uv build --package agent-control-crewai
+      - run: uv build --package agent-control-adapters
 
   adapters:
     runs-on: ubuntu-latest
@@ -37,15 +37,15 @@ jobs:
       matrix:
         include:
           - backend: google-adk
-            namespace: agent_hooks_google_adk
+            namespace: agent_control_google_adk
           - backend: langchain
-            namespace: agent_hooks_langchain
+            namespace: agent_control_langchain
           - backend: langgraph
-            namespace: agent_hooks_langgraph
+            namespace: agent_control_langgraph
           - backend: openai-agents
-            namespace: agent_hooks_openai_agents
+            namespace: agent_control_openai_agents
           - backend: maf
-            namespace: agent_hooks_maf
+            namespace: agent_control_maf
     defaults:
       run:
         working-directory: python/packages/${{ matrix.backend }}
@@ -71,8 +71,8 @@ jobs:
       - name: Audit the independent locked public dependency closure
         run: |
           uv export --locked --all-groups --all-extras --no-hashes \
-            --no-emit-project --no-emit-package agent-hooks-adapters \
-            --no-emit-package agent-hooks-langgraph --output-file audit-requirements.txt
+            --no-emit-project --no-emit-package agent-control-adapters \
+            --no-emit-package agent-control-langgraph --output-file audit-requirements.txt
           uv run --no-sync pip-audit --disable-pip --no-deps \
             -r audit-requirements.txt --progress-spinner off
       - name: Build the core and selected adapter independently
@@ -85,8 +85,8 @@ jobs:
       - name: Install and import noneditable wheels without the checkout
         run: |
           uv export --locked --all-extras --no-dev --no-default-groups --no-hashes \
-            --no-emit-project --no-emit-package agent-hooks-adapters \
-            --no-emit-package agent-hooks-langgraph --output-file wheel-requirements.txt
+            --no-emit-project --no-emit-package agent-control-adapters \
+            --no-emit-package agent-control-langgraph --output-file wheel-requirements.txt
           uv venv --python 3.11 .wheel-smoke
           uv pip install --python .wheel-smoke/bin/python --no-deps \
             -r wheel-requirements.txt ../../../dist/${{ matrix.backend }}/*.whl
@@ -96,12 +96,12 @@ jobs:
           import os
           import site
           from pathlib import Path
-          from agent_hooks_adapters import Backend
+          from agent_control_adapters import Backend
 
           assert Backend(os.environ["ADAPTER_BACKEND"]).value == os.environ["ADAPTER_BACKEND"]
-          names = ["agent_hooks_adapters", os.environ["ADAPTER_NAMESPACE"]]
+          names = ["agent_control_adapters", os.environ["ADAPTER_NAMESPACE"]]
           if os.environ["ADAPTER_BACKEND"] == "langchain":
-              names.append("agent_hooks_langgraph")
+              names.append("agent_control_langgraph")
           roots = tuple(Path(path).resolve() for path in site.getsitepackages())
           for name in names:
               module = importlib.import_module(name)
@@ -111,6 +111,9 @@ jobs:
           portable = importlib.import_module(os.environ["ADAPTER_NAMESPACE"] + ".portable")
           assert callable(portable.create_backend)
           assert importlib.util.find_spec("crewai") is None
+          assert importlib.util.find_spec("agent_hooks") is not None
+          for suffix in ("adapters", "crewai", "google_adk", "langchain", "langgraph", "openai_agents", "maf"):
+              assert importlib.util.find_spec("agent_hooks_" + suffix) is None
           PY
 
   security:

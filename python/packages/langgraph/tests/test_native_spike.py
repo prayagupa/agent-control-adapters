@@ -6,8 +6,8 @@ import asyncio
 
 import pytest
 from agent_adapter_conformance import assert_governed_success
+from agent_control_adapters import AdapterBlocked, RunRequest
 from agent_hooks.exceptions import InterceptionBlocked
-from agent_hooks_adapters import AdapterBlocked, RunRequest
 from langchain_core.messages import ToolMessage
 from langgraph_adapter_test_helpers import POINTS, NativePolicy, graph_adapter, graph_case
 

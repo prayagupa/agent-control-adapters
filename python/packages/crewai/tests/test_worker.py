@@ -10,9 +10,9 @@ from typing import Any
 from uuid import uuid4
 
 import pytest
+from agent_control_crewai import AdapterBlocked, AdapterCleanupError
+from agent_control_crewai._worker import Binding, Worker
 from agent_hooks import ALLOW, AgentContext, Verdict
-from agent_hooks_crewai import AdapterBlocked, AdapterCleanupError
-from agent_hooks_crewai._worker import Binding, Worker
 
 
 def worker_for(policy: Any, *, timeout: float = 1, emit_timeout: float = 2) -> Worker:

@@ -15,10 +15,10 @@ from adk_adapter_test_helpers import (
     text_response,
     tool_response,
 )
+from agent_control_adapters import AdapterBlocked, RunRequest
+from agent_control_adapters.runtime import NativeExecutionLimits, RunBudget, validate_topology
+from agent_control_google_adk._profile import native_field
 from agent_hooks import ALLOW, AgentContext, Verdict
-from agent_hooks_adapters import AdapterBlocked, RunRequest
-from agent_hooks_adapters.runtime import NativeExecutionLimits, RunBudget, validate_topology
-from agent_hooks_google_adk._profile import native_field
 from google.adk.models.llm_request import LlmRequest
 from google.adk.models.llm_response import LlmResponse
 from google.adk.sessions import InMemorySessionService
@@ -64,7 +64,7 @@ def test_one_tool_call_per_model_output_denies_before_any_body() -> None:
 def test_pending_correlation_cap_exact_threshold_and_sticky_failure(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.setattr("agent_hooks_adapters.runtime._MAX_MODEL_CALLS", 65)
+    monkeypatch.setattr("agent_control_adapters.runtime._MAX_MODEL_CALLS", 65)
     budget = RunBudget("adk-pending-cap-test")
     for index in range(64):
         budget.before_model(0, f"model-{index}")
@@ -111,8 +111,8 @@ def test_fixed_recursion_and_concurrency() -> None:
 
 
 def test_native_run_deadline_and_drain(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr("agent_hooks_adapters.runtime._NATIVE_RUN_TIMEOUT", 0.05)
-    monkeypatch.setattr("agent_hooks_adapters.runtime._NATIVE_CLEANUP_TIMEOUT", 0.5)
+    monkeypatch.setattr("agent_control_adapters.runtime._NATIVE_RUN_TIMEOUT", 0.05)
+    monkeypatch.setattr("agent_control_adapters.runtime._NATIVE_CLEANUP_TIMEOUT", 0.5)
 
     async def scenario() -> None:
         entered, exited = asyncio.Event(), asyncio.Event()

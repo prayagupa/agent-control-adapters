@@ -19,6 +19,16 @@ imports. That baseline predates the public-documentation/metadata cleanup and is
 not a receipt for a later commit. Each source push must validate its exact staged
 snapshot and report its exact-SHA CI separately.
 
+All products now use `agent-control-*` distributions and `agent_control_*` imports.
+Historical receipts and wheel hashes predate this rename; their original notices
+and recorded output remain unchanged and do not approve the renamed snapshot.
+
+The renamed packages passed **1,501 deterministic/native tests**, all six owning
+static-check scopes, seven wheel/sdist builds, and six isolated wheel-import and
+dependency checks. A fresh CrewAI smoke run passed **four real local-model cases**:
+response sanitization and tool denial, each in module and standalone modes. This
+focused run does not complete broader model acceptance or independent review.
+
 Model cases are marked `e2e` and intentionally excluded from the ordinary
 deterministic CI run. Deselection is **missing model evidence**, not a pass.
 Structural checks validate paths, manifests, licensing, and documentation links;
@@ -40,7 +50,7 @@ for production deployment or public release.
 
 ## Real-model evidence and limits
 
-The most recent refresh did **not** finish:
+An earlier broader refresh did **not** finish:
 
 - Four root cases passed, then a CrewAI human-approved example timed out; eleven
   remaining root cases were not executed.

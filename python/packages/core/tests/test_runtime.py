@@ -9,9 +9,9 @@ from concurrent.futures import ThreadPoolExecutor
 from typing import TypeVar
 
 import pytest
-from agent_hooks_adapters import AdapterBlocked, RunRequest
-from agent_hooks_adapters import runtime as runtime_module
-from agent_hooks_adapters.runtime import (
+from agent_control_adapters import AdapterBlocked, RunRequest
+from agent_control_adapters import runtime as runtime_module
+from agent_control_adapters.runtime import (
     NativeExecutionLimits,
     NativeTaskOwner,
     RunAdmission,

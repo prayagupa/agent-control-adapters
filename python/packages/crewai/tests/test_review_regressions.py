@@ -5,8 +5,8 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
+from agent_control_crewai import AdapterBlocked, CrewAIAdapter
 from agent_hooks import ALLOW, Decision, Transform, Verdict
-from agent_hooks_crewai import AdapterBlocked, CrewAIAdapter
 from crewai.agents.crew_agent_executor import CrewAgentExecutor
 from crewai.experimental.agent_executor import AgentExecutor
 from crewai.hooks.dispatch import InterceptionPoint, scoped_hooks

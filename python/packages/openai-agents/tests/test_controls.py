@@ -12,10 +12,10 @@ from agent_adapter_conformance import (
     assert_governed_success,
     make_rego_manifest,
 )
+from agent_control_adapters import AdapterBlocked, AgentPolicy, RunRequest
+from agent_control_adapters.json import object_value
 from agent_hooks import ALLOW, AgentContext, Decision, Transform, Verdict
 from agent_hooks.exceptions import InterceptionBlocked
-from agent_hooks_adapters import AdapterBlocked, AgentPolicy, RunRequest
-from agent_hooks_adapters.json import object_value
 from openai_adapter_test_helpers import Policy, controlled, native_case, scope_of
 
 POINTS = (

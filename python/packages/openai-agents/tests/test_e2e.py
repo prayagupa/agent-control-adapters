@@ -11,7 +11,7 @@ import urllib.request
 from pathlib import Path
 
 import pytest
-from agent_hooks_adapters.json import JSON, object_value
+from agent_control_adapters.json import JSON, object_value
 
 _EXAMPLES = Path(__file__).resolve().parents[4] / "examples" / "openai-agents"
 _DIGEST = "845dbda0ea48ed749caafd9e6037047aa19acfcfd82e704d7ca97d631a0b697e"
@@ -81,11 +81,11 @@ def wheel_python(tmp_path_factory: pytest.TempPathFactory) -> Path:
             str(python),
             "-I",
             "-c",
-            "import agent_hooks_adapters, agent_hooks_openai_agents; "
-            "from agent_hooks_adapters import Backend; "
+            "import agent_control_adapters, agent_control_openai_agents; "
+            "from agent_control_adapters import Backend; "
             "assert Backend('openai-agents').value == 'openai-agents'; "
-            "assert 'site-packages' in agent_hooks_adapters.__file__; "
-            "assert 'site-packages' in agent_hooks_openai_agents.__file__",
+            "assert 'site-packages' in agent_control_adapters.__file__; "
+            "assert 'site-packages' in agent_control_openai_agents.__file__",
         ],
         cwd=root,
         env=environment,

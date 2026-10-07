@@ -7,13 +7,13 @@ from collections.abc import AsyncIterator, Callable, Mapping, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from agent_control_adapters import AgentPolicy
+from agent_control_adapters.json import JSON, object_value
+from agent_control_openai_agents import OpenAIAgentsAdapter
+from agent_control_openai_agents._codec import raw_arguments
+from agent_control_openai_agents.adapter import NativeScope
+from agent_control_openai_agents.portable import create_backend
 from agent_hooks import ALLOW, AgentContext, Interceptor, Verdict
-from agent_hooks_adapters import AgentPolicy
-from agent_hooks_adapters.json import JSON, object_value
-from agent_hooks_openai_agents import OpenAIAgentsAdapter
-from agent_hooks_openai_agents._codec import raw_arguments
-from agent_hooks_openai_agents.adapter import NativeScope
-from agent_hooks_openai_agents.portable import create_backend
 from agents import Agent, FunctionTool, ModelSettings
 from agents.agent_output import AgentOutputSchemaBase
 from agents.handoffs import Handoff

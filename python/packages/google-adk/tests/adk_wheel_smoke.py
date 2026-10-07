@@ -11,10 +11,10 @@ import sys
 from collections.abc import AsyncGenerator
 from pathlib import Path
 
-import agent_hooks_adapters
-import agent_hooks_google_adk
+import agent_control_adapters
+import agent_control_google_adk
+from agent_control_adapters import Backend, RunRequest, with_agent_controls
 from agent_hooks import ALLOW, AgentContext, Verdict
-from agent_hooks_adapters import Backend, RunRequest, with_agent_controls
 from google.adk.agents import LlmAgent
 from google.adk.models.base_llm import BaseLlm
 from google.adk.models.llm_request import LlmRequest
@@ -61,7 +61,7 @@ class TransportBoundary(BaseLlm):
 async def smoke() -> None:
     """Require non-editable imports and actual SDK records for all eight native points."""
     prefix = Path(sys.prefix).resolve()
-    for module in (agent_hooks_adapters, agent_hooks_google_adk):
+    for module in (agent_control_adapters, agent_control_google_adk):
         if module.__file__ is None or not Path(module.__file__).resolve().is_relative_to(prefix):
             raise RuntimeError("Wheel smoke rejects editable/source fallback")
     effects: list[str] = []
@@ -108,8 +108,8 @@ async def smoke() -> None:
                 {
                     "status": "PASSED",
                     "prefix": str(prefix),
-                    "namespace_file": agent_hooks_google_adk.__file__,
-                    "core_file": agent_hooks_adapters.__file__,
+                    "namespace_file": agent_control_google_adk.__file__,
+                    "core_file": agent_control_adapters.__file__,
                     "backend": Backend.GOOGLE_ADK.value,
                     "model_calls": model.calls,
                     "tool_effects": effects,
@@ -118,8 +118,8 @@ async def smoke() -> None:
                         name: importlib.metadata.version(name)
                         for name in (
                             "google-adk",
-                            "agent-hooks-google-adk",
-                            "agent-hooks-adapters",
+                            "agent-control-google-adk",
+                            "agent-control-adapters",
                             "agent-hooks-sdk",
                             "agent-control-spec",
                         )

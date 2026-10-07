@@ -1,4 +1,4 @@
-# agent-hooks-maf
+# agent-control-maf
 
 ACS policy controls through Microsoft Agent Framework's native Agent Hooks
 middleware. This adapter does not replace the native framework integration or

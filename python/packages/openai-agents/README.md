@@ -2,8 +2,8 @@
 
 Unpublished alpha; review the [security notice](https://github.com/prayagupa/agent-control-adapters/blob/main/SECURITY.md) before deployment.
 
-Independent distribution `agent-hooks-openai-agents`, namespace
-`agent_hooks_openai_agents`. It requires OpenAI Agents SDK Python **0.23.1**
+Independent distribution `agent-control-openai-agents`, namespace
+`agent_control_openai_agents`. It requires OpenAI Agents SDK Python **0.23.1**
 and runs on the application's existing event loop.
 
 See the [adapter documentation](https://github.com/prayagupa/agent-control-adapters/blob/main/docs/openai-agents/README.md) for the

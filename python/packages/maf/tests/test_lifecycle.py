@@ -10,9 +10,9 @@ from pathlib import Path
 import httpx2
 import pytest
 from agent_adapter_conformance import make_rego_manifest
+from agent_control_adapters import AdapterBlocked, RunRequest
+from agent_control_adapters import runtime as runtime_module
 from agent_framework import ChatResponse, Content, Message
-from agent_hooks_adapters import AdapterBlocked, RunRequest
-from agent_hooks_adapters import runtime as runtime_module
 from maf_adapter_test_helpers import controlled, native_case, native_tool_pair
 from openai import APIConnectionError
 

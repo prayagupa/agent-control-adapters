@@ -7,6 +7,63 @@ resolution-markers = [
 ]
 
 [[package]]
+name = "agent-control-adapters"
+version = "0.1.0a1"
+source = { editable = "../core" }
+dependencies = [
+    { name = "agent-hooks-sdk" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "agent-control-crewai", marker = "extra == 'crewai'", editable = "../crewai" },
+    { name = "agent-control-spec", marker = "extra == 'acs'", specifier = "==0.4.0a4" },
+    { name = "agent-hooks-sdk", specifier = "==0.1.0a5" },
+]
+provides-extras = ["acs", "crewai"]
+
+[[package]]
+name = "agent-control-maf"
+version = "0.1.0a1"
+source = { editable = "." }
+dependencies = [
+    { name = "agent-control-adapters" },
+    { name = "agent-control-spec" },
+    { name = "agent-framework-core" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "agent-framework-openai" },
+    { name = "bandit" },
+    { name = "build" },
+    { name = "openai" },
+    { name = "pip-audit" },
+    { name = "pyright" },
+    { name = "pytest" },
+    { name = "ruff" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "agent-control-adapters", editable = "../core" },
+    { name = "agent-control-spec", specifier = "==0.4.0a4" },
+    { name = "agent-framework-core", specifier = "==1.20.0" },
+]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "agent-framework-openai", specifier = "==1.15.0" },
+    { name = "bandit", specifier = ">=1.8,<2" },
+    { name = "build", specifier = ">=1.2,<2" },
+    { name = "openai", specifier = "==3.24.0" },
+    { name = "pip-audit", specifier = ">=2.9,<3" },
+    { name = "pyright", specifier = ">=1.1.400,<2" },
+    { name = "pytest", specifier = ">=8.3,<10" },
+    { name = "ruff", specifier = ">=0.15,<0.16" },
+]
+
+[[package]]
 name = "agent-control-spec"
 version = "0.4.0a4"
 source = { registry = "https://pypi.org/simple" }
@@ -47,63 +104,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/ad/97/e17fface9bf2d53a29c50074b8918c07b11f5efab4889303f9b4f90d05ad/agent_framework_openai-1.15.0.tar.gz", hash = "sha256:2b08d68538f82233a040f3fb9672d449b2d2832992b47c6046be6b193fced26f", size = 74408, upload-time = "2026-10-02T12:41:08.109Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/b2/55/a7520c76d267e128134f8ff4ce17a94dcc748a7ca9516e289c6551712181/agent_framework_openai-1.15.0-py3-none-any.whl", hash = "sha256:e66afa8be1e85344a0f1d446684bd67bd099ff0ed8e5ea96f415fc013b18c4fb", size = 79077, upload-time = "2026-10-02T12:41:06.933Z" },
-]
-
-[[package]]
-name = "agent-hooks-adapters"
-version = "0.1.0a1"
-source = { editable = "../core" }
-dependencies = [
-    { name = "agent-hooks-sdk" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "agent-control-spec", marker = "extra == 'acs'", specifier = "==0.4.0a4" },
-    { name = "agent-hooks-crewai", marker = "extra == 'crewai'", editable = "../crewai" },
-    { name = "agent-hooks-sdk", specifier = "==0.1.0a5" },
-]
-provides-extras = ["acs", "crewai"]
-
-[[package]]
-name = "agent-hooks-maf"
-version = "0.1.0a1"
-source = { editable = "." }
-dependencies = [
-    { name = "agent-control-spec" },
-    { name = "agent-framework-core" },
-    { name = "agent-hooks-adapters" },
-]
-
-[package.dev-dependencies]
-dev = [
-    { name = "agent-framework-openai" },
-    { name = "bandit" },
-    { name = "build" },
-    { name = "openai" },
-    { name = "pip-audit" },
-    { name = "pyright" },
-    { name = "pytest" },
-    { name = "ruff" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "agent-control-spec", specifier = "==0.4.0a4" },
-    { name = "agent-framework-core", specifier = "==1.20.0" },
-    { name = "agent-hooks-adapters", editable = "../core" },
-]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "agent-framework-openai", specifier = "==1.15.0" },
-    { name = "bandit", specifier = ">=1.8,<2" },
-    { name = "build", specifier = ">=1.2,<2" },
-    { name = "openai", specifier = "==3.24.0" },
-    { name = "pip-audit", specifier = ">=2.9,<3" },
-    { name = "pyright", specifier = ">=1.1.400,<2" },
-    { name = "pytest", specifier = ">=8.3,<10" },
-    { name = "ruff", specifier = ">=0.15,<0.16" },
 ]
 
 [[package]]

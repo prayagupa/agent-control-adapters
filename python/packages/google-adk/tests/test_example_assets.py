@@ -8,9 +8,9 @@ from pathlib import Path
 
 import pytest
 from adk_adapter_test_helpers import controlled, native_case
+from agent_control_adapters import AdapterBlocked, RunRequest
+from agent_control_google_adk._profile import profile
 from agent_hooks import Decision
-from agent_hooks_adapters import AdapterBlocked, RunRequest
-from agent_hooks_google_adk._profile import profile
 
 _EXAMPLES = Path(__file__).resolve().parents[4] / "examples" / "google-adk"
 

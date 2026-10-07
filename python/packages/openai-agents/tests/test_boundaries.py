@@ -6,9 +6,9 @@ import asyncio
 from dataclasses import replace
 
 import pytest
+from agent_control_adapters import AdapterBlocked, RunRequest
+from agent_control_adapters.json import JSON
 from agent_hooks import ALLOW, Decision, Transform, Verdict
-from agent_hooks_adapters import AdapterBlocked, RunRequest
-from agent_hooks_adapters.json import JSON
 from agents.items import ModelResponse
 from agents.usage import Usage
 from openai.types.responses import ResponseOutputMessage, ResponseOutputRefusal

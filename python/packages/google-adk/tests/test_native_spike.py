@@ -7,9 +7,9 @@ import asyncio
 import pytest
 from adk_adapter_test_helpers import Control, controlled, native_case
 from agent_adapter_conformance import assert_denied_before_effect
-from agent_hooks_adapters import AdapterBlocked, RunRequest
-from agent_hooks_adapters.json import object_value
-from agent_hooks_google_adk._profile import native_field
+from agent_control_adapters import AdapterBlocked, RunRequest
+from agent_control_adapters.json import object_value
+from agent_control_google_adk._profile import native_field
 
 
 def test_actual_runner_model_replacements_preserve_system_usage_and_ids() -> None:

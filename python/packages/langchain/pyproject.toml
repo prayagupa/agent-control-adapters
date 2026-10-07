@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "agent-hooks-langchain"
+name = "agent-control-langchain"
 version = "0.1.0a1"
 description = "Bounded native LangChain middleware with application-owned agents"
 readme = "README.md"
@@ -19,8 +19,8 @@ classifiers = [
 ]
 requires-python = ">=3.11,<3.14"
 dependencies = [
-    "agent-hooks-adapters==0.1.0a1",
-    "agent-hooks-langgraph==0.1.0a1",
+    "agent-control-adapters==0.1.0a1",
+    "agent-control-langgraph==0.1.0a1",
     "langchain==1.4.3",
     "langchain-core==1.6.6",
     "langgraph==1.2.13",
@@ -50,8 +50,8 @@ dev = [
 ]
 
 [tool.uv.sources]
-agent-hooks-adapters = { path = "../core", editable = true }
-agent-hooks-langgraph = { path = "../langgraph", editable = true }
+agent-control-adapters = { path = "../core", editable = true }
+agent-control-langgraph = { path = "../langgraph", editable = true }
 
 [[tool.uv.index]]
 name = "pypi"
@@ -59,7 +59,7 @@ url = "https://pypi.org/simple"
 default = true
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/agent_hooks_langchain"]
+packages = ["src/agent_control_langchain"]
 
 [tool.ruff]
 line-length = 100

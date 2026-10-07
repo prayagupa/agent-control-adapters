@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import pytest
-from agent_hooks_crewai._json import envelope, messages_value, normalize, object_value
+from agent_control_crewai._json import envelope, messages_value, normalize, object_value
 
 
 @pytest.mark.parametrize(

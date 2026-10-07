@@ -1,7 +1,7 @@
 # Google ADK adapter
 
-`agent-hooks-google-adk` governs the installed **Google ADK 2.11.0** runner with
-Agent Hooks or optional ACS/Rego. Import namespace: `agent_hooks_google_adk`.
+`agent-control-google-adk` governs the installed **Google ADK 2.11.0** runner with
+Agent Hooks or optional ACS/Rego. Import namespace: `agent_control_google_adk`.
 It preserves native ADK execution and uses the published SDK/policy runtime.
 
 **Unpublished alpha.** Final real-model and independent review acceptance are

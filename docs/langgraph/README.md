@@ -1,7 +1,7 @@
 # LangGraph adapter
 
-`agent-hooks-langgraph` adds Agent Hooks or ACS controls to an application-built
-native graph. Namespace: `agent_hooks_langgraph`. Pins: LangGraph **1.2.13**,
+`agent-control-langgraph` adds Agent Hooks or ACS controls to an application-built
+native graph. Namespace: `agent_control_langgraph`. Pins: LangGraph **1.2.13**,
 prebuilt **1.1.0**, langchain-core **1.6.6**, optional ACS **0.4.0a4**.
 It does **not** require top-level LangChain.
 

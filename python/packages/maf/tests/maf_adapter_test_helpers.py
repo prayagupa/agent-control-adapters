@@ -9,10 +9,10 @@ from typing import cast
 
 import httpx2
 import pytest
+from agent_control_adapters import AsyncAdapter
+from agent_control_maf.portable import create_backend
 from agent_framework import Agent, ChatOptions, ChatResponse, Content, FunctionTool, Message, tool
 from agent_framework.openai import OpenAIChatClient
-from agent_hooks_adapters import AsyncAdapter
-from agent_hooks_maf.portable import create_backend
 from openai import AsyncOpenAI
 
 

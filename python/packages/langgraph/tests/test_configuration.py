@@ -3,10 +3,10 @@
 from typing import cast
 
 import pytest
-from agent_hooks_adapters import AdapterBlocked, RunRequest
-from agent_hooks_langgraph import LangGraphControls
-from agent_hooks_langgraph._inspection import attribute
-from agent_hooks_langgraph._native import ModelProof
+from agent_control_adapters import AdapterBlocked, RunRequest
+from agent_control_langgraph import LangGraphControls
+from agent_control_langgraph._inspection import attribute
+from agent_control_langgraph._native import ModelProof
 from langchain_core.language_models import LanguageModelInput
 from langchain_core.messages import AIMessage, BaseMessage
 from langchain_core.runnables import Runnable, RunnableBinding

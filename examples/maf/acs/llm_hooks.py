@@ -8,9 +8,9 @@ import os
 from pathlib import Path
 
 import httpx2
+from agent_control_adapters import AdapterBlocked, Backend, RunRequest, with_agent_controls
 from agent_framework import Agent, ChatOptions
 from agent_framework.openai import OpenAIChatClient
-from agent_hooks_adapters import AdapterBlocked, Backend, RunRequest, with_agent_controls
 from openai import AsyncOpenAI
 
 

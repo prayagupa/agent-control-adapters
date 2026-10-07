@@ -1,4 +1,4 @@
-# agent-hooks-langchain
+# agent-control-langchain
 
 Native, single-use LangChain middleware controls. The application visibly calls
 `create_agent` and owns its model, tools, clients, and event loop.

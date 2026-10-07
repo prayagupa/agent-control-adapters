@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import pytest
-from agent_hooks_crewai import AgentPolicy, CrewAIAdapter
+from agent_control_crewai import AgentPolicy, CrewAIAdapter
 from crewai import Process
 from crewai_adapter_test_helpers import Policy, make_crew
 

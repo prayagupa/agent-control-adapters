@@ -9,11 +9,11 @@ Install from source using the selected [adapter guide](../README.md#get-started)
 The root workspace contains core and CrewAI only. Google ADK, LangChain,
 LangGraph, OpenAI Agents SDK and Microsoft Agent Framework have independently
 locked environments; do not combine them into the CrewAI workspace.
-The `agent-hooks-adapters` distribution declares `[crewai]` and `[acs]` extras;
+The `agent-control-adapters` distribution declares `[crewai]` and `[acs]` extras;
 `[crewai,acs]` selects both the backend and the optional, pinned
 `agent-control-spec==0.4.0a4` runtime. Adapter distributions are not yet published
 to PyPI.
-Import `Backend` from `agent_hooks_adapters` and select an implemented member:
+Import `Backend` from `agent_control_adapters` and select an implemented member:
 `Backend.CREWAI`, `Backend.GOOGLE_ADK`, `Backend.LANGCHAIN`,
 `Backend.LANGGRAPH`, `Backend.OPENAI_AGENTS` or `Backend.MAF`.
 The factory imports only the selected adapter.

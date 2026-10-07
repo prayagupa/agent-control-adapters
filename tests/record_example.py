@@ -18,8 +18,8 @@ os.environ["CREWAI_TRACING_ENABLED"] = "false"
 os.environ["CREWAI_TELEMETRY_ENABLED"] = "false"
 
 import httpx
+from agent_control_crewai import AdapterBlocked, CrewAIAdapter
 from agent_hooks import InterceptionRecord
-from agent_hooks_crewai import AdapterBlocked, CrewAIAdapter
 from crewai.crews.crew_output import CrewOutput
 
 ROOT: Path = Path(__file__).resolve().parents[1]

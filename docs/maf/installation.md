@@ -5,7 +5,7 @@ environment. The supported pins are:
 
 | Component | Version |
 | --- | --- |
-| `agent-hooks-adapters` / `agent-hooks-maf` | `0.1.0a1` |
+| `agent-control-adapters` / `agent-control-maf` | `0.1.0a1` |
 | `agent-framework-core` | `1.20.0` |
 | `agent-control-spec` | `0.4.0a4` |
 | Example OpenAI connector | `agent-framework-openai==1.15.0` |
@@ -29,13 +29,13 @@ install those wheels together with the pinned example requirements. The
 pre-release packages need not already exist on an index:
 
 ```bash
-uv build --package agent-hooks-adapters --out-dir /absolute/path/to/wheels
+uv build --package agent-control-adapters --out-dir /absolute/path/to/wheels
 uv build --directory python/packages/maf --out-dir /absolute/path/to/wheels
 uv venv /absolute/path/to/demo/.venv
 uv pip install --index-url https://pypi.org/simple \
   --python /absolute/path/to/demo/.venv/bin/python \
-  /absolute/path/to/wheels/agent_hooks_adapters-0.1.0a1-py3-none-any.whl \
-  /absolute/path/to/wheels/agent_hooks_maf-0.1.0a1-py3-none-any.whl \
+  /absolute/path/to/wheels/agent_control_adapters-0.1.0a1-py3-none-any.whl \
+  /absolute/path/to/wheels/agent_control_maf-0.1.0a1-py3-none-any.whl \
   -r examples/maf/acs/requirements.txt
 ```
 

@@ -7,8 +7,8 @@ import json
 from collections.abc import Iterable
 from pathlib import Path
 
+from agent_control_adapters import Adapter, RunRequest, RunResult
 from agent_hooks import Decision, InterceptionRecord
-from agent_hooks_adapters import Adapter, RunRequest, RunResult
 
 INVALID_PROMPTS: tuple[RunRequest | None, ...] = (
     None,

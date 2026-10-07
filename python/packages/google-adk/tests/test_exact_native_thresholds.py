@@ -6,9 +6,9 @@ import asyncio
 
 import pytest
 from adk_adapter_test_helpers import controlled, native_case
-from agent_hooks_adapters import AdapterBlocked, RunRequest
-from agent_hooks_google_adk._plugin import ControlsPlugin
-from agent_hooks_google_adk._profile import native_field
+from agent_control_adapters import AdapterBlocked, RunRequest
+from agent_control_google_adk._plugin import ControlsPlugin
+from agent_control_google_adk._profile import native_field
 from google.adk.agents.invocation_context import InvocationContext
 from google.adk.events import Event
 

@@ -7,11 +7,38 @@ import tomllib
 from pathlib import Path
 
 import pytest
-from agent_hooks_adapters.json import object_value
+from agent_control_adapters.json import object_value
 
 ROOT: Path = Path(__file__).resolve().parents[1]
 REPOSITORY: str = "https://github.com/prayagupa/agent-control-adapters"
 MANIFESTS: tuple[Path, ...] = tuple(sorted((ROOT / "python" / "packages").glob("*/pyproject.toml")))
+
+
+@pytest.mark.parametrize("manifest", MANIFESTS, ids=[path.parent.name for path in MANIFESTS])
+def test_product_distributions_and_namespaces_use_agent_control(manifest: Path) -> None:
+    """Keep product names aligned without renaming the external Agent Hooks SDK."""
+    metadata = object_value(tomllib.loads(manifest.read_text(encoding="utf-8")))
+    project = object_value(metadata["project"])
+    suffix = (
+        "adapters" if manifest.parent.name == "core" else manifest.parent.name.replace("-", "_")
+    )
+    namespace = f"agent_control_{suffix}"
+    assert project["name"] == namespace.replace("_", "-")
+    tool = object_value(metadata["tool"])
+    hatch = object_value(tool["hatch"])
+    build = object_value(hatch["build"])
+    targets = object_value(build["targets"])
+    wheel = object_value(targets["wheel"])
+    assert wheel["packages"] == [f"src/{namespace}"]
+    assert (manifest.parent / "src" / namespace / "__init__.py").is_file()
+    assert (manifest.parent / "src" / namespace / "py.typed").is_file()
+    assert not (manifest.parent / "src" / f"agent_hooks_{suffix}").exists()
+    dependencies = project["dependencies"]
+    assert isinstance(dependencies, list)
+    if suffix == "adapters":
+        assert dependencies == ["agent-hooks-sdk==0.1.0a5"]
+    else:
+        assert "agent-control-adapters==0.1.0a1" in dependencies
 
 
 @pytest.mark.parametrize("manifest", MANIFESTS, ids=[path.parent.name for path in MANIFESTS])

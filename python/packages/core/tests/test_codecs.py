@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import pytest
-from agent_hooks_adapters.codecs import (
+from agent_control_adapters.codecs import (
     input_text,
     model_text,
     output_text,
@@ -11,7 +11,7 @@ from agent_hooks_adapters.codecs import (
     unchanged,
     wire_equal,
 )
-from agent_hooks_adapters.json import JSON
+from agent_control_adapters.json import JSON
 
 
 def test_wire_equality_distinguishes_bool_number_nested_and_key_order() -> None:

@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from agent_hooks_adapters import AsyncAdapter, NativeRuntime
-from agent_hooks_langchain import LangChainControls
-from agent_hooks_langchain.portable import create_backend
+from agent_control_adapters import AsyncAdapter, NativeRuntime
+from agent_control_langchain import LangChainControls
+from agent_control_langchain.portable import create_backend
 from langchain.agents import create_agent  # pyright: ignore[reportUnknownVariableType]
 from langchain_core.tools import StructuredTool
 from langgraph_adapter_test_helpers import NativePolicy, NativeTransport, model_and_tool

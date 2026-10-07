@@ -8,15 +8,15 @@ import json
 from pathlib import Path
 
 import httpx2
-from agent_hooks_adapters import (
+from agent_control_adapters import (
     AdapterBlocked,
     Backend,
     NativeRuntime,
     RunRequest,
     with_agent_controls,
 )
-from agent_hooks_langchain import LangChainControls
-from agent_hooks_langgraph.example_telemetry import ExampleTelemetry
+from agent_control_langchain import LangChainControls
+from agent_control_langgraph.example_telemetry import ExampleTelemetry
 from langchain.agents import create_agent  # pyright: ignore[reportUnknownVariableType]
 from langchain_openai import ChatOpenAI
 from openai import AsyncOpenAI, OpenAI

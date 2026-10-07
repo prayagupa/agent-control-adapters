@@ -11,15 +11,7 @@ from itertools import groupby
 from typing import Literal
 
 import pytest
-from agent_hooks import (
-    ALLOW,
-    AgentContext,
-    Decision,
-    InterceptionEmitter,
-    InterceptionRecord,
-    Verdict,
-)
-from agent_hooks_adapters import (
+from agent_control_adapters import (
     Adapter,
     AdapterBlocked,
     AdapterCleanupError,
@@ -30,16 +22,24 @@ from agent_hooks_adapters import (
     UnsupportedBackendError,
     create_adapter,
 )
-from agent_hooks_crewai import (
+from agent_control_crewai import (
     AdapterBlocked as NativeAdapterBlocked,
 )
-from agent_hooks_crewai import (
+from agent_control_crewai import (
     AdapterCleanupError as NativeAdapterCleanupError,
 )
-from agent_hooks_crewai import (
+from agent_control_crewai import (
     AgentPolicy as NativeAgentPolicy,
 )
-from agent_hooks_crewai import CrewAIAdapter
+from agent_control_crewai import CrewAIAdapter
+from agent_hooks import (
+    ALLOW,
+    AgentContext,
+    Decision,
+    InterceptionEmitter,
+    InterceptionRecord,
+    Verdict,
+)
 from crewai import Agent, Crew, Task
 from crewai.crews.crew_output import CrewOutput
 from crewai.hooks.dispatch import HookAborted, InterceptionPoint, get_scoped_hooks

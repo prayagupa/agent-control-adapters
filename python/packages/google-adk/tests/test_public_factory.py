@@ -6,14 +6,14 @@ import asyncio
 
 from adk_adapter_test_helpers import Allow, native_case
 from agent_adapter_conformance import assert_governed_success
-from agent_hooks_adapters import (
+from agent_control_adapters import (
     Backend,
     RunRequest,
     create_adapter,
     with_agent_controls,
     with_agent_hooks,
 )
-from agent_hooks_google_adk.adapter import GoogleADKAdapter
+from agent_control_google_adk.adapter import GoogleADKAdapter
 
 
 def test_registered_public_selector_returns_native_async_adapter() -> None:

@@ -1,4 +1,4 @@
-# agent-hooks-adapters
+# agent-control-adapters
 
 Typed execution contracts for Agent Hooks and ACS controls in agent frameworks.
 

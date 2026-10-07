@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "agent-hooks-openai-agents"
+name = "agent-control-openai-agents"
 version = "0.1.0a1"
 description = "Bounded Agent Hooks and ACS controls for OpenAI Agents SDK Python"
 readme = "README.md"
@@ -19,7 +19,7 @@ classifiers = [
 ]
 requires-python = ">=3.11,<3.14"
 dependencies = [
-    "agent-hooks-adapters==0.1.0a1",
+    "agent-control-adapters==0.1.0a1",
     "openai-agents==0.23.1",
     "jsonschema==4.26.0",
 ]
@@ -46,7 +46,7 @@ dev = [
 ]
 
 [tool.uv.sources]
-agent-hooks-adapters = { path = "../core", editable = true }
+agent-control-adapters = { path = "../core", editable = true }
 
 [[tool.uv.index]]
 name = "pypi"
@@ -54,7 +54,7 @@ url = "https://pypi.org/simple"
 default = true
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/agent_hooks_openai_agents"]
+packages = ["src/agent_control_openai_agents"]
 
 [tool.ruff]
 line-length = 100

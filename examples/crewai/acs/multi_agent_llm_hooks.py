@@ -10,7 +10,7 @@ os.environ["OTEL_SDK_DISABLED"] = "true"
 os.environ["CREWAI_TRACING_ENABLED"] = "false"
 os.environ["CREWAI_TELEMETRY_ENABLED"] = "false"
 
-from agent_hooks_adapters import AgentPolicy, Backend, RunRequest, with_agent_controls
+from agent_control_adapters import AgentPolicy, Backend, RunRequest, with_agent_controls
 from crewai import Agent, Crew, Process, Task
 from crewai.llms.providers.openai.completion import OpenAICompletion
 

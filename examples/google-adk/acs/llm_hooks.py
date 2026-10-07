@@ -7,8 +7,8 @@ import json
 from pathlib import Path
 
 import httpx
+from agent_control_adapters import Backend, RunRequest, with_agent_controls
 from agent_hooks import Decision
-from agent_hooks_adapters import Backend, RunRequest, with_agent_controls
 from google.adk.agents import LlmAgent
 from google.adk.models.lite_llm import LiteLlm
 from google.adk.runners import Runner

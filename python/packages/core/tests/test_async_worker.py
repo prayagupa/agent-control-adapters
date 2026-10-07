@@ -13,8 +13,11 @@ from concurrent.futures import ThreadPoolExecutor
 from typing import Protocol, cast
 from uuid import uuid4
 
-import agent_hooks_adapters._worker as worker_module
+import agent_control_adapters._worker as worker_module
 import pytest
+from agent_control_adapters._worker import Binding, Worker, _Job, _Notification
+from agent_control_adapters.errors import AdapterBlocked, AdapterCleanupError
+from agent_control_adapters.json import JSON, normalize, object_value
 from agent_hooks import (
     ALLOW,
     AgentContext,
@@ -27,9 +30,6 @@ from agent_hooks import (
     Transform,
     Verdict,
 )
-from agent_hooks_adapters._worker import Binding, Worker, _Job, _Notification
-from agent_hooks_adapters.errors import AdapterBlocked, AdapterCleanupError
-from agent_hooks_adapters.json import JSON, normalize, object_value
 
 _IDENTITY = str(uuid4())
 _SESSION = str(uuid4())

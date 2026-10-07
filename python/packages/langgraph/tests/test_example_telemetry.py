@@ -10,7 +10,7 @@ from typing import cast
 import httpx2
 import pytest
 from agent_adapter_conformance import assert_graph_example_transport_budget
-from agent_hooks_langgraph.example_telemetry import ExampleTelemetry
+from agent_control_langgraph.example_telemetry import ExampleTelemetry
 from langchain_openai import ChatOpenAI
 from openai import AsyncOpenAI, OpenAI
 from pydantic import SecretStr

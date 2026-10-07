@@ -6,6 +6,7 @@ import threading
 from typing import Any
 
 import pytest
+from agent_control_crewai import AdapterBlocked, AgentPolicy, CrewAIAdapter
 from agent_hooks import (
     ALLOW,
     AgentContext,
@@ -14,7 +15,6 @@ from agent_hooks import (
     Transform,
     Verdict,
 )
-from agent_hooks_crewai import AdapterBlocked, AgentPolicy, CrewAIAdapter
 from crewai import Agent, Task
 from crewai.agents.crew_agent_executor import CrewAgentExecutor
 from crewai.crews.crew_output import CrewOutput

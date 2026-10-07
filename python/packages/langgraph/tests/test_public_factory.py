@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 from agent_adapter_conformance import make_rego_manifest
-from agent_hooks_adapters import AsyncAdapter, Backend, RunRequest, with_agent_controls
+from agent_control_adapters import AsyncAdapter, Backend, RunRequest, with_agent_controls
 from graph_adapter_contract_vectors import Mode
 from langgraph_adapter_test_helpers import NativePolicy, graph_case
 

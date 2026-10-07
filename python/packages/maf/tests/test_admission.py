@@ -8,11 +8,11 @@ from pathlib import Path
 from typing import cast
 
 import pytest
+from agent_control_adapters import AgentPolicy, Backend, RunRequest, with_agent_controls
+from agent_control_adapters import bindings as bindings_module
+from agent_control_adapters.acs import load_acs_policy
 from agent_framework import Agent, ChatOptions, FunctionTool
 from agent_hooks import ALLOW, AgentContext, Interceptor, Verdict
-from agent_hooks_adapters import AgentPolicy, Backend, RunRequest, with_agent_controls
-from agent_hooks_adapters import bindings as bindings_module
-from agent_hooks_adapters.acs import load_acs_policy
 from maf_adapter_test_helpers import controlled, native_case, native_tool_pair
 
 

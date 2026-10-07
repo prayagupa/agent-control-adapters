@@ -6,10 +6,10 @@ import asyncio
 
 import pytest
 from agent_adapter_conformance import assert_governed_success
+from agent_control_adapters import AdapterBlocked, RunRequest
+from agent_control_adapters.json import normalize, object_value
 from agent_hooks import ALLOW, AgentContext, Decision, Transform, Verdict
 from agent_hooks.exceptions import InterceptionBlocked
-from agent_hooks_adapters import AdapterBlocked, RunRequest
-from agent_hooks_adapters.json import normalize, object_value
 from agents import RunConfig, Runner
 from agents.exceptions import UserError
 from agents.items import ModelResponse

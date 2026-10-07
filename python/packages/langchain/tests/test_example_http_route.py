@@ -7,9 +7,9 @@ from typing import Literal
 
 import httpx2
 import pytest
-from agent_hooks_adapters import Backend, NativeRuntime, RunRequest, with_agent_controls
-from agent_hooks_langchain import LangChainControls
-from agent_hooks_langgraph.example_telemetry import record_run_result
+from agent_control_adapters import Backend, NativeRuntime, RunRequest, with_agent_controls
+from agent_control_langchain import LangChainControls
+from agent_control_langgraph.example_telemetry import record_run_result
 from langchain.agents import create_agent  # pyright: ignore[reportUnknownVariableType]
 from langchain_core.runnables import RunnableBinding
 from langchain_core.tools import StructuredTool

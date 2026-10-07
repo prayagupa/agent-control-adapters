@@ -5,11 +5,11 @@ from __future__ import annotations
 import asyncio
 
 import pytest
-from agent_hooks_adapters import AdapterBlocked, NativeRuntime, RunRequest
-from agent_hooks_langgraph import GuardedModelNode, GuardedToolNode, LangGraphControls
-from agent_hooks_langgraph._native import model_value
-from agent_hooks_langgraph._routing import Route, RoutingLedger
-from agent_hooks_langgraph.portable import create_backend
+from agent_control_adapters import AdapterBlocked, NativeRuntime, RunRequest
+from agent_control_langgraph import GuardedModelNode, GuardedToolNode, LangGraphControls
+from agent_control_langgraph._native import model_value
+from agent_control_langgraph._routing import Route, RoutingLedger
+from agent_control_langgraph.portable import create_backend
 from langchain_core.messages import AIMessage, HumanMessage
 from langgraph.graph import (  # pyright: ignore[reportMissingTypeStubs]
     END,

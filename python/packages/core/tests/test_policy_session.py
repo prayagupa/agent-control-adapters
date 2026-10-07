@@ -5,8 +5,13 @@ from __future__ import annotations
 import asyncio
 import threading
 
-import agent_hooks_adapters._worker as worker_module
+import agent_control_adapters._worker as worker_module
 import pytest
+from agent_control_adapters import AdapterBlocked, AdapterCleanupError
+from agent_control_adapters.bindings import prepare_controls
+from agent_control_adapters.codecs import input_text, unchanged
+from agent_control_adapters.json import JSON, object_value
+from agent_control_adapters.runtime import PolicySession
 from agent_hooks import (
     ALLOW,
     AgentContext,
@@ -15,11 +20,6 @@ from agent_hooks import (
     InterceptionPoint,
     Verdict,
 )
-from agent_hooks_adapters import AdapterBlocked, AdapterCleanupError
-from agent_hooks_adapters.bindings import prepare_controls
-from agent_hooks_adapters.codecs import input_text, unchanged
-from agent_hooks_adapters.json import JSON, object_value
-from agent_hooks_adapters.runtime import PolicySession
 
 
 class Allow:

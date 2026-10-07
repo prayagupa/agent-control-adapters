@@ -5,14 +5,14 @@ from pathlib import Path
 
 import pytest
 from agent_adapter_conformance import make_rego_manifest
-from agent_hooks_adapters import (
+from agent_control_adapters import (
     AsyncAdapter,
     Backend,
     NativeRuntime,
     RunRequest,
     with_agent_controls,
 )
-from agent_hooks_langchain import LangChainControls
+from agent_control_langchain import LangChainControls
 from graph_adapter_contract_vectors import Mode
 from langchain.agents import create_agent  # pyright: ignore[reportUnknownVariableType]
 from langchain_adapter_test_helpers import chain_case

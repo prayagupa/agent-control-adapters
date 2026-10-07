@@ -1,6 +1,6 @@
 # Microsoft Agent Framework: ACS controls
 
-The `agent-hooks-maf` alpha governs an existing native `agent_framework.Agent`
+The `agent-control-maf` alpha governs an existing native `agent_framework.Agent`
 through the framework's experimental
 `create_agent_hooks_middleware_from_emitter` factory. It does not provide a second
 policy evaluator or message mapper. Only ACS policies are accepted.

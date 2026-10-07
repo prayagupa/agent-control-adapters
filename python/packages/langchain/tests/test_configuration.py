@@ -1,7 +1,7 @@
 """Native create-agent configuration proof rejects mutation before transport effects."""
 
 import pytest
-from agent_hooks_adapters import AdapterBlocked, RunRequest
+from agent_control_adapters import AdapterBlocked, RunRequest
 from langchain_adapter_test_helpers import chain_adapter, chain_case
 from langgraph_adapter_test_helpers import NativePolicy
 

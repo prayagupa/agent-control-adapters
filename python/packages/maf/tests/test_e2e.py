@@ -104,7 +104,7 @@ def _example(
                 "import json;from importlib.metadata import version;"
                 "print(json.dumps({name:version(name) for name in "
                 "('agent-framework-core','agent-framework-openai','agent-control-spec',"
-                "'openai','httpx2','agent-hooks-adapters','agent-hooks-maf')}))"
+                "'openai','httpx2','agent-control-adapters','agent-control-maf')}))"
             ),
         ],
         cwd=cwd,
@@ -117,8 +117,8 @@ def _example(
         "agent-control-spec": "0.4.0a4",
         "openai": "3.24.0",
         "httpx2": "2.13.1",
-        "agent-hooks-adapters": "0.1.0a1",
-        "agent-hooks-maf": "0.1.0a1",
+        "agent-control-adapters": "0.1.0a1",
+        "agent-control-maf": "0.1.0a1",
     }
     model_receipt["versions"] = versions
     command = [str(python), str(script)]
@@ -268,7 +268,7 @@ def test_copied_examples_outside_checkout(
     shutil.copytree(_EXAMPLES, copied, ignore=shutil.ignore_patterns("__pycache__"))
     dist = isolated / "dist"
     build_commands = [
-        ["uv", "build", "--package", "agent-hooks-adapters", "--out-dir", str(dist)],
+        ["uv", "build", "--package", "agent-control-adapters", "--out-dir", str(dist)],
         ["uv", "build", "--directory", str(_ROOT / "python/packages/maf"), "--out-dir", str(dist)],
     ]
     build_receipts: list[dict[str, object]] = []
@@ -328,8 +328,8 @@ def test_copied_examples_outside_checkout(
             str(python),
             "-c",
             (
-                "import agent_hooks_adapters,agent_hooks_maf; "
-                "print(agent_hooks_adapters.__file__);print(agent_hooks_maf.__file__)"
+                "import agent_control_adapters,agent_control_maf; "
+                "print(agent_control_adapters.__file__);print(agent_control_maf.__file__)"
             ),
         ],
         cwd=isolated,

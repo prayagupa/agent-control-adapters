@@ -8,8 +8,8 @@ from pathlib import Path
 import pytest
 from adk_adapter_test_helpers import POINTS, controlled, native_case
 from agent_adapter_conformance import assert_governed_success, make_rego_manifest
+from agent_control_adapters import AdapterBlocked, RunRequest
 from agent_hooks import Decision
-from agent_hooks_adapters import AdapterBlocked, RunRequest
 
 
 def test_actual_acs_allow_all_eight_points(tmp_path: Path) -> None:
