@@ -1,0 +1,17 @@
+agent_control_specification_version: "0.5.0-alpha.1"
+policies:
+  text_limit:
+    type: rego
+    bundle: "./policy"
+    query: data.controls.text_limit
+intervention_points:
+  agent_startup: &check
+    policy_target: "$snap.target"
+    policy: {id: text_limit}
+  input: *check
+  pre_model_call: *check
+  post_model_call: *check
+  pre_tool_call: *check
+  post_tool_call: *check
+  output: *check
+  agent_shutdown: *check

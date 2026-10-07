@@ -85,7 +85,7 @@ def test_framework_guides_live_in_docs() -> None:
     for guide in ("api.md", "crewai/README.md", "crewai/examples.md"):
         assert (ROOT / "docs" / guide).is_file()
         assert f"(docs/{guide})" in readme
-    for framework in ("google-adk", "langgraph", "langchain", "openai-agents"):
+    for framework in ("google-adk", "langchain", "langgraph", "openai-agents", "maf"):
         guide = f"{framework}/README.md"
         assert (ROOT / "docs" / guide).is_file()
         assert f"(docs/{guide})" in readme
@@ -100,7 +100,7 @@ def test_framework_guides_live_in_docs() -> None:
 
 
 @pytest.mark.parametrize(
-    "package", ["core", "crewai", "google-adk", "langgraph", "langchain", "openai-agents"]
+    "package", ["core", "crewai", "google-adk", "langchain", "langgraph", "openai-agents", "maf"]
 )
 def test_python_packages_are_grouped_by_language(package: str) -> None:
     """Keep independently built Python packages in their language directory."""
@@ -111,13 +111,21 @@ def test_python_packages_are_grouped_by_language(package: str) -> None:
     assert not (ROOT / "packages").exists()
 
 
-@pytest.mark.parametrize("framework", ["google-adk", "langgraph", "langchain", "openai-agents"])
+@pytest.mark.parametrize("framework", ["google-adk", "langchain", "langgraph", "openai-agents"])
 def test_new_adapter_examples_use_the_shared_policy_source_layout(framework: str) -> None:
     """Keep complete scripts in the user-facing agent_hooks and acs folders."""
     directory = ROOT / "examples" / framework
     for source in ("agent_hooks", "acs"):
         for script in ("llm_hooks.py", "tool_hooks.py"):
             assert (directory / source / script).is_file()
+    assert not (directory / "native").exists()
+
+
+def test_maf_examples_are_acs_only() -> None:
+    directory = ROOT / "examples" / "maf"
+    for script in ("llm_hooks.py", "tool_hooks.py"):
+        assert (directory / "acs" / script).is_file()
+    assert not (directory / "agent_hooks").exists()
     assert not (directory / "native").exists()
 
 

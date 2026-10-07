@@ -1,7 +1,7 @@
 # Security scope
 
-This alpha adapter provides opt-in policy checks at documented CrewAI hook
-boundaries. It is not a sandbox, operating-system permission system, transactional
+These alpha adapters provide opt-in policy checks at each documented framework
+boundary. They are not a sandbox, operating-system permission system, transactional
 rollback mechanism, or guarantee against arbitrary trusted Python code.
 
 Treat model output, tool results, prompts and retrieved content as untrusted.
@@ -88,6 +88,6 @@ gate remains **blocked**. CI does not suppress these advisories or use
 The unpublished local adapter cannot be looked up on PyPI by `pip-audit`; its
 source receives separate static checks and review.
 
-No public vulnerability-reporting endpoint is configured for this local,
-unpublished workspace. Before publication, maintainers must configure a private
-reporting channel rather than asking reporters to expose vulnerabilities publicly.
+No private vulnerability-reporting channel is configured. Before making the
+repository public, maintainers must configure one rather than asking reporters
+to disclose vulnerabilities in public issues.

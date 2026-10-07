@@ -1,6 +1,31 @@
 # Coverage and compatibility
 
-Initial dependency contract: Python 3.11-3.13, CrewAI **1.15.23**, agent-hooks-sdk
+## Backend profiles
+
+The shared [portable contract](portable-contract.md) does not make framework
+features interchangeable. All adapters use SDK **0.1.0a5**; ACS controls use
+**0.4.0a4**. Python support remains **3.11-3.13**. Install and validate each
+independently locked environment rather than one combined dependency closure.
+
+| Backend | Pinned framework | Controls and native execution | Complete profile |
+|---|---|---|---|
+| CrewAI | 1.15.23 | Agent Hooks / ACS; synchronous sequential crew | [Guide](crewai/README.md) |
+| Google ADK | 2.11.0 | Agent Hooks / ACS; async native runner | [Guide](google-adk/README.md) |
+| LangChain | 1.4.3; Core 1.6.6 | Agent Hooks / ACS; application-owned native sync/async builder | [Guide](langchain/README.md) |
+| LangGraph | 1.2.13; Prebuilt 1.1.0 | Agent Hooks / ACS; guarded-node sync/async builder | [Guide](langgraph/README.md) |
+| OpenAI Agents SDK | 0.23.1 | Agent Hooks / ACS; async actual Runner | [Guide](openai-agents/README.md) |
+| Microsoft Agent Framework | Core 1.20.0 | ACS only; native Agent Hooks middleware | [Guide](maf/README.md) |
+
+The new profiles accept only bounded prompt input, serial native execution and
+explicitly supported text/function-tool paths. They reject persistence/resume,
+streaming, model-selected identity and uninspectable custom execution. Do not
+infer support for richer framework features from a common `run` method.
+Transformation support and native lifecycle ownership are documented in each
+guide; unsupported changes fail closed.
+
+## CrewAI compatibility
+
+Dependency contract: Python 3.11-3.13, CrewAI **1.15.23**, agent-hooks-sdk
 **0.1.0a5**. Runtime execution evidence records the actual interpreter separately;
 declaring a Python range does not mean every interpreter/platform was tested.
 The SDK includes a compiled native core; moving it outside CrewAI does **not**

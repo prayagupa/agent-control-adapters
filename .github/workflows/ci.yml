@@ -44,6 +44,8 @@ jobs:
             namespace: agent_hooks_langgraph
           - backend: openai-agents
             namespace: agent_hooks_openai_agents
+          - backend: maf
+            namespace: agent_hooks_maf
     defaults:
       run:
         working-directory: python/packages/${{ matrix.backend }}

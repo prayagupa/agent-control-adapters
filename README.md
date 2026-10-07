@@ -48,6 +48,7 @@ framework configuration, and complete runnable examples:
 | LangChain | `agent-hooks-langchain` | Agent Hooks or ACS | Native sync / async | [Adapter guide](docs/langchain/README.md) |
 | LangGraph | `agent-hooks-langgraph` | Agent Hooks or ACS | Native sync / async | [Adapter guide](docs/langgraph/README.md) |
 | OpenAI Agents SDK | `agent-hooks-openai-agents` | Agent Hooks or ACS | Async | [Adapter guide](docs/openai-agents/README.md) |
+| Microsoft Agent Framework | `agent-hooks-maf` | ACS only; native middleware | Async | [Adapter guide](docs/maf/README.md) |
 
 Each adapter has an explicit supported execution profile; review its guide and
 [coverage](docs/coverage.md) before using it for enforcement. Use separate

@@ -26,10 +26,11 @@ Approval receipts deliberately say `piped-test-input`. They prove approval-seam
 behavior with real model generation, **not that a human reviewed these runs**.
 The interactive command reads an actual operator's terminal response.
 
-Regenerate from the root:
+With a new scoped approval and an exclusive model slot, capture new receipts
+from the root. Use a new destination; do not overwrite these historical files:
 
 ```bash
-LOCAL_MODEL_REQUIRED=1 EXAMPLE_CAPTURE_DIR=docs/example-runs \
+LOCAL_MODEL_REQUIRED=1 EXAMPLE_CAPTURE_DIR=/your/new-receipts \
   uv run --no-sync pytest -m e2e
 ```
 
