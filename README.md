@@ -47,6 +47,7 @@ framework configuration, and complete runnable examples:
 | Google ADK | `agent-hooks-google-adk` | Agent Hooks or ACS | Async | [Adapter guide](docs/google-adk/README.md) |
 | LangChain | `agent-hooks-langchain` | Agent Hooks or ACS | Native sync / async | [Adapter guide](docs/langchain/README.md) |
 | LangGraph | `agent-hooks-langgraph` | Agent Hooks or ACS | Native sync / async | [Adapter guide](docs/langgraph/README.md) |
+| OpenAI Agents SDK | `agent-hooks-openai-agents` | Agent Hooks or ACS | Async | [Adapter guide](docs/openai-agents/README.md) |
 
 Each adapter has an explicit supported execution profile; review its guide and
 [coverage](docs/coverage.md) before using it for enforcement. Use separate

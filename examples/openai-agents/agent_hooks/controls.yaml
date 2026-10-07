@@ -1,0 +1,15 @@
+agent_control_specification_version: "0.5.0-alpha.1"
+policies:
+  guard:
+    type: rego
+    bundle: ./policy
+    query: data.openai_controls.verdict
+intervention_points:
+  agent_startup: {policy_target: "$snap.target", policy: {id: guard}}
+  input: {policy_target: "$snap.target", policy: {id: guard}}
+  pre_model_call: {policy_target: "$snap.target", policy: {id: guard}}
+  post_model_call: {policy_target: "$snap.target", policy: {id: guard}}
+  pre_tool_call: {policy_target: "$snap.target", policy: {id: guard}}
+  post_tool_call: {policy_target: "$snap.target", policy: {id: guard}}
+  output: {policy_target: "$snap.target", policy: {id: guard}}
+  agent_shutdown: {policy_target: "$snap.target", policy: {id: guard}}
