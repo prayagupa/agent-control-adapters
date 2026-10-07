@@ -38,6 +38,8 @@ jobs:
         include:
           - backend: google-adk
             namespace: agent_hooks_google_adk
+          - backend: langgraph
+            namespace: agent_hooks_langgraph
     defaults:
       run:
         working-directory: python/packages/${{ matrix.backend }}

@@ -83,7 +83,7 @@ trusted actor mapping. LangGraph binds every guarded executable node to its
 own actual object; model-origin tool correlation does not turn a tool-node
 label into authorization. A separately supplied `agents` mapping must agree
 exactly with the builder's mapping. See the
-[available adapter guides](../README.md#get-started)
+[LangGraph guide](langgraph/README.md)
 for complete construction and supported topology.
 
 This is an interface description, not a model-output demonstration. See the

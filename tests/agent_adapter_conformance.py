@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import ast
 import json
 from collections.abc import Iterable
 from pathlib import Path
@@ -47,6 +48,36 @@ def assert_denied_before_effect(adapter: Adapter, *, point: str, effects: int) -
         record.interception_point.value == point and record.verdict.decision is Decision.DENY
         for record in adapter.records
     )
+
+
+def assert_graph_example_transport_budget(path: Path) -> None:
+    """Verify real graph example constructors retain their finite transport settings."""
+    tree = ast.parse(path.read_text(encoding="utf-8"))
+    calls = [
+        node
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Name)
+        and node.func.id in {"OpenAI", "AsyncOpenAI", "ChatOpenAI", "LocalToolModel"}
+    ]
+    assert len(calls) == 3
+    for call in calls:
+        keywords = {item.arg: item.value for item in call.keywords}
+        assert ast.literal_eval(keywords["timeout"]) == 60
+        assert ast.literal_eval(keywords["max_retries"]) == 0
+        if "temperature" in keywords:
+            assert ast.literal_eval(keywords["temperature"]) == 0
+            assert ast.literal_eval(keywords["max_completion_tokens"]) == (
+                128 if path.name == "llm_hooks.py" else 256
+            )
+    if path.name == "tool_hooks.py":
+        assertions = [
+            node
+            for node in ast.walk(tree)
+            if isinstance(node, ast.If)
+            and ast.unparse(node.test) == "mode != 'allow' or len(effects) != 1"
+        ]
+        assert len(assertions) == 1
 
 
 def make_rego_manifest(

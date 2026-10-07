@@ -1,0 +1,248 @@
+"""Exercise a real local Qwen-selected tool using native ACS YAML/Rego."""
+
+from __future__ import annotations
+
+import argparse
+import asyncio
+import json
+from pathlib import Path
+
+import httpx2
+from agent_hooks import Decision
+from agent_hooks_adapters import (
+    AdapterBlocked,
+    Backend,
+    NativeRuntime,
+    RunRequest,
+    with_agent_controls,
+)
+from agent_hooks_langgraph import LangGraphControls
+from agent_hooks_langgraph.example_telemetry import (
+    ExampleTelemetry,
+    record_native_result,
+    record_run_result,
+)
+from langchain_core.callbacks import AsyncCallbackManagerForLLMRun, CallbackManagerForLLMRun
+from langchain_core.messages import BaseMessage, ToolMessage
+from langchain_core.outputs import ChatResult
+from langchain_core.tools import StructuredTool
+from langchain_openai import ChatOpenAI
+from langgraph.graph import (  # pyright: ignore[reportMissingTypeStubs]
+    END,
+    START,
+    MessagesState,
+    StateGraph,
+)
+from langgraph.prebuilt import tools_condition
+from openai import AsyncOpenAI, OpenAI
+from pydantic import SecretStr
+
+
+class LocalToolModel(ChatOpenAI):
+    """Select a real tool first and request a real final answer after its native result."""
+
+    def _generate(
+        self,
+        messages: list[BaseMessage],
+        stop: list[str] | None = None,
+        run_manager: CallbackManagerForLLMRun | None = None,
+        **kwargs: object,
+    ) -> ChatResult:
+        kwargs["tool_choice"] = (
+            "none" if any(isinstance(message, ToolMessage) for message in messages) else "required"
+        )
+        result = super()._generate(messages, stop=stop, run_manager=run_manager, **kwargs)
+        record_native_result(result)
+        return result
+
+    async def _agenerate(
+        self,
+        messages: list[BaseMessage],
+        stop: list[str] | None = None,
+        run_manager: AsyncCallbackManagerForLLMRun | None = None,
+        **kwargs: object,
+    ) -> ChatResult:
+        kwargs["tool_choice"] = (
+            "none" if any(isinstance(message, ToolMessage) for message in messages) else "required"
+        )
+        result = await super()._agenerate(messages, stop=stop, run_manager=run_manager, **kwargs)
+        record_native_result(result)
+        return result
+
+
+async def main(mode: str, synthetic_data: str | None = None) -> None:
+    telemetry = ExampleTelemetry(synthetic_data=synthetic_data)
+
+    effects: list[str] = []
+
+    def echo(value: str) -> str:
+        """Echo text and count the actual application-owned native effect."""
+        effects.append(value)
+        return value
+
+    async def aecho(value: str) -> str:
+        """Explicit asynchronous local tool body."""
+        effects.append(value)
+        return value
+
+    tool = StructuredTool.from_function(
+        echo,
+        coroutine=aecho,
+        name="echo" if mode == "allow" else "blocked_echo",
+        description="Echo the supplied local text once.",
+    )
+    sync_http = httpx2.Client(trust_env=False, follow_redirects=False)
+    async_http: httpx2.AsyncClient | None = None
+    sync_client: OpenAI | None = None
+    async_client: AsyncOpenAI | None = None
+    try:
+        async_http = httpx2.AsyncClient(
+            trust_env=False,
+            follow_redirects=False,
+            transport=telemetry.transport(httpx2.AsyncHTTPTransport(trust_env=False, retries=0)),
+            event_hooks={"request": [telemetry.request], "response": [telemetry.response]},
+        )
+        sync_client = OpenAI(
+            api_key="ollama",
+            base_url="http://localhost:11434/v1",
+            timeout=60,
+            max_retries=0,
+            http_client=sync_http,
+        )
+        async_client = AsyncOpenAI(
+            api_key="ollama",
+            base_url="http://localhost:11434/v1",
+            timeout=60,
+            max_retries=0,
+            http_client=async_http,
+        )
+        model = LocalToolModel(
+            model="qwen2.5:latest",
+            api_key=SecretStr("ollama"),
+            base_url="http://localhost:11434/v1",
+            temperature=0,
+            max_completion_tokens=256,
+            timeout=60,
+            max_retries=0,
+            client=sync_client.chat.completions,
+            async_client=async_client.chat.completions,
+            root_client=sync_client,
+            root_async_client=async_client,
+        )
+
+        def build(controls: LangGraphControls) -> NativeRuntime:
+            model_node = controls.model_node("assistant", model, [tool])
+            tool_node = controls.tool_node("tools", [tool])
+            graph = StateGraph(MessagesState)
+            graph.add_node("assistant", model_node)  # pyright: ignore[reportUnknownMemberType]
+            graph.add_node("tools", tool_node)  # pyright: ignore[reportUnknownMemberType]
+            graph.add_edge(START, "assistant")
+            graph.add_conditional_edges(
+                "assistant", tools_condition, {"tools": "tools", "__end__": END}
+            )
+            graph.add_edge("tools", "assistant")
+            compiled = graph.compile()  # pyright: ignore[reportUnknownMemberType]
+            return NativeRuntime(compiled, {"assistant": model_node, "tools": tool_node})
+
+        adapter = with_agent_controls(
+            backend=Backend.LANGGRAPH,
+            runtime=build,
+            policy_file=Path(__file__).with_name("controls.yaml"),
+        )
+        try:
+            result = await adapter.arun(
+                RunRequest(
+                    {
+                        "prompt": (
+                            f"Call the provided {tool.name} tool once with value "
+                            "'local test', then give a short final answer."
+                        )
+                    }
+                )
+            )
+        except AdapterBlocked as error:
+            denied = any(
+                record.interception_point.value == "pre_tool_call"
+                and record.verdict.decision is Decision.DENY
+                for record in adapter.records
+            )
+            if mode != "deny" or effects or not denied:
+                raise
+            print(
+                json.dumps(
+                    telemetry.summary(
+                        {
+                            "status": "blocked",
+                            "tool_effects": len(effects),
+                            "tool_effect_values": effects,
+                            "records_dropped": adapter.records_dropped,
+                            "native_error": type(error).__name__,
+                            "sdk_cause": (
+                                {
+                                    "type": type(error.__cause__).__name__,
+                                    "message": str(error.__cause__),
+                                }
+                                if error.__cause__ is not None
+                                else None
+                            ),
+                            "records": [
+                                {
+                                    "point": record.interception_point.value,
+                                    "decision": record.verdict.decision.value,
+                                }
+                                for record in adapter.records
+                            ],
+                            "cleanup_error": adapter.cleanup_error is not None,
+                        }
+                    )
+                )
+            )
+            return
+        record_run_result(result, effects)
+        if mode != "allow" or len(effects) != 1:
+            raise RuntimeError(
+                "The native tool demonstration did not produce exactly one allowed effect"
+            )
+        print(
+            json.dumps(
+                telemetry.summary(
+                    {
+                        "status": "allowed",
+                        "output": result.output,
+                        "tool_effects": len(effects),
+                        "tool_effect_values": effects,
+                        "records_dropped": result.records_dropped,
+                        "records": [
+                            {
+                                "point": record.interception_point.value,
+                                "decision": record.verdict.decision.value,
+                            }
+                            for record in result.records
+                        ],
+                        "cleanup_error": adapter.cleanup_error is not None,
+                    }
+                )
+            )
+        )
+    finally:
+        try:
+            if async_client is not None:
+                await async_client.close()
+        finally:
+            try:
+                if sync_client is not None:
+                    sync_client.close()
+            finally:
+                try:
+                    if async_http is not None:
+                        await async_http.aclose()
+                finally:
+                    sync_http.close()
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--mode", choices=("allow", "deny"), default="deny")
+    parser.add_argument("--synthetic-diagnostics", choices=("local-toy-v1",))
+    args = parser.parse_args()
+    asyncio.run(main(args.mode, args.synthetic_diagnostics))
