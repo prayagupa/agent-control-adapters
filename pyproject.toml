@@ -14,7 +14,14 @@ url = "https://pypi.org/simple"
 default = true
 
 [tool.uv.workspace]
-members = ["packages/*"]
+members = ["python/packages/core", "python/packages/crewai"]
+exclude = [
+    "python/packages/google-adk",
+    "python/packages/langchain",
+    "python/packages/langgraph",
+    "python/packages/openai-agents",
+    "python/packages/maf",
+]
 
 [tool.uv.sources]
 agent-hooks-adapters = { workspace = true }
@@ -43,12 +50,19 @@ select = ["E", "F", "W", "I", "B", "UP", "SIM", "RUF"]
 [tool.pyright]
 typeCheckingMode = "strict"
 pythonVersion = "3.11"
-include = ["packages/core/src", "packages/crewai/src", "examples"]
+include = [
+    "python/packages/core/src",
+    "python/packages/core/tests",
+    "python/packages/crewai/src",
+    "examples/crewai",
+    "tests/agent_adapter_conformance.py",
+    "tests/test_publication_metadata.py",
+]
 venvPath = "."
 venv = ".venv"
 
 [tool.pytest.ini_options]
-testpaths = ["packages/core/tests", "packages/crewai/tests", "tests"]
+testpaths = ["python/packages/core/tests", "python/packages/crewai/tests", "tests"]
 pythonpath = ["."]
 addopts = "-ra -p no:agent_hooks_ctk"
 markers = [

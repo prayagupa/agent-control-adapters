@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from enum import StrEnum
 from pathlib import Path
+from types import MappingProxyType
 from typing import Protocol, cast
 
 from agent_hooks import InterceptionRecord, Interceptor
@@ -18,6 +20,11 @@ class Backend(StrEnum):
     """Execution backends implemented by the adapter factory."""
 
     CREWAI = "crewai"
+    GOOGLE_ADK = "google-adk"
+    LANGCHAIN = "langchain"
+    LANGGRAPH = "langgraph"
+    OPENAI_AGENTS = "openai-agents"
+    MAF = "maf"
 
 
 def validate_agent_id(agent_id: object) -> None:
@@ -79,6 +86,38 @@ class AgentPolicy:
             object.__setattr__(self, "policy_file", normalize_policy_file(self.policy_file))
 
 
+@dataclass(frozen=True, init=False)
+class NativeRuntime:
+    """A builder's native runtime and detached, trusted actor membership.
+
+    Native objects remain application-owned; only the label mapping is copied.
+    """
+
+    runtime: object
+    _agents: Mapping[str, object] = field(repr=False)
+
+    def __init__(self, runtime: object, agents: Mapping[str, object]) -> None:
+        if runtime is None:
+            raise ValueError("A native runtime is required")
+        if not isinstance(cast("object", agents), Mapping):
+            raise TypeError("agents must be a mapping of labels to native objects")
+        if not 1 <= len(agents) <= 16:
+            raise ValueError("Native runtime must contain between 1 and 16 actors")
+        owned: dict[str, object] = {}
+        for label, native in agents.items():
+            validate_agent_id(label)
+            if native is None or any(native is actor for actor in owned.values()):
+                raise ValueError("Native runtime requires distinct native actor objects")
+            owned[label] = native
+        object.__setattr__(self, "runtime", runtime)
+        object.__setattr__(self, "_agents", MappingProxyType(owned))
+
+    @property
+    def agents(self) -> Mapping[str, object]:
+        """Expose read-only labels without copying or disguising native identities."""
+        return self._agents
+
+
 class Adapter(Protocol):
     """One synchronous, single-use governed run; backend setup stays outside this API."""
 
@@ -99,4 +138,12 @@ class Adapter(Protocol):
 
     def run(self, request: RunRequest | None = None) -> RunResult:
         """Execute once; governance denial raises AdapterBlocked instead of a result."""
+        ...
+
+
+class AsyncAdapter(Adapter, Protocol):
+    """A single-use adapter supporting execution on the caller's running event loop."""
+
+    async def arun(self, request: RunRequest | None = None) -> RunResult:
+        """Execute once without owning or closing caller clients or their event loop."""
         ...

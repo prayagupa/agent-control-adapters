@@ -10,8 +10,7 @@ The `agent-hooks-adapters` distribution declares `[crewai]` and `[acs]` extras;
 `[crewai,acs]` selects both the backend and the optional, pinned
 `agent-control-spec==0.4.0a4` runtime. Adapter distributions are not yet published
 to PyPI.
-Import `Backend` from `agent_hooks_adapters` and select `Backend.CREWAI`, the only
-implemented member. The factory requires an enum member and raises
+Import `Backend` from `agent_hooks_adapters` and select `Backend.CREWAI` for this source checkpoint. The factory requires an enum member and raises
 `UnsupportedBackendError` for raw strings, invalid selectors, or a missing backend
 installation, rather than falling back to another framework.
 

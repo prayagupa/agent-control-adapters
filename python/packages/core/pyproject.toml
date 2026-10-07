@@ -1,0 +1,34 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "agent-hooks-adapters"
+version = "0.1.0a1"
+description = "Framework-neutral execution contracts for agent-hooks adapters"
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Typing :: Typed",
+]
+requires-python = ">=3.11,<3.14"
+dependencies = ["agent-hooks-sdk==0.1.0a5"]
+
+[project.urls]
+Homepage = "https://github.com/prayagupa/agent-control-adapters"
+Documentation = "https://github.com/prayagupa/agent-control-adapters/blob/main/docs/api.md"
+Source = "https://github.com/prayagupa/agent-control-adapters"
+Issues = "https://github.com/prayagupa/agent-control-adapters/issues"
+
+[project.optional-dependencies]
+acs = ["agent-control-spec==0.4.0a4"]
+crewai = ["agent-hooks-crewai==0.1.0a1"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/agent_hooks_adapters"]

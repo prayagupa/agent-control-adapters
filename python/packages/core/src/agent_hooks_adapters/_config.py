@@ -1,4 +1,4 @@
-"""Shared admission checks applied before loading application policy configuration."""
+"""Common limits validated before native resources or policy files are opened."""
 
 from __future__ import annotations
 
@@ -6,7 +6,7 @@ import math
 
 
 def validate_run_options(timeout: float, emit_timeout: float, max_records: int) -> None:
-    """Require positive finite deadlines and a bounded audit cap; raise on invalid input."""
+    """Require finite positive policy deadlines and a bounded audit cap."""
     for duration in (timeout, emit_timeout):
         if isinstance(duration, bool) or not math.isfinite(duration) or duration <= 0:
             raise ValueError("Timeouts must be positive finite seconds")

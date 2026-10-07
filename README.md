@@ -6,7 +6,8 @@ interceptors or [Agent Control Specification (ACS)](https://pypi.org/project/age
 YAML/Rego policies, without modifying framework internals.
 
 **Status:** alpha; adapter distributions are not yet published to PyPI.
-Production release is currently blocked by upstream dependency advisories.
+Production release is blocked by upstream dependency advisories and incomplete
+model/review acceptance. See [validation](docs/validation.md) for the evidence gaps.
 Read the [security notice](SECURITY.md#known-dependency-release-blocker) before
 deployment.
 
@@ -40,19 +41,24 @@ flowchart LR
 Requires **Python 3.11-3.13**. Choose a supported adapter for source installation,
 framework configuration, and complete runnable examples:
 
-| Framework | Adapter package | Documentation |
-|---|---|---|
-| CrewAI | `agent-hooks-crewai` | [Adapter guide](docs/crewai/README.md) / [Complete examples](docs/crewai/examples.md) |
+| Framework | Adapter package | Controls | Execution | Documentation |
+|---|---|---|---|---|
+| CrewAI | `agent-hooks-crewai` | Agent Hooks or ACS | Sync | [Adapter guide](docs/crewai/README.md) / [Complete examples](docs/crewai/examples.md) |
 
-Only the listed adapter is implemented. Each adapter has an explicit supported
-execution profile; review its guide and [coverage](docs/coverage.md) before
-using it for enforcement.
+Each adapter has an explicit supported execution profile; review its guide and
+[coverage](docs/coverage.md) before using it for enforcement. Use separate
+dependency environments for the framework adapters. Their pinned dependency
+closures are not compatible with an umbrella installation.
 
 The shared `agent-hooks-adapters` package provides backend selection, policy
 assignments, run requests/results, and common errors. See the
 [shared API reference](docs/api.md) for contracts and compatibility aliases.
 Distribution and Python import names retain their `agent-hooks` / `agent_hooks`
 prefixes.
+
+Python source packages live in [`python/packages/`](python/packages/), leaving
+room for future language-specific implementations. The root workspace manages
+core and CrewAI; other Python adapters keep independent locks and environments.
 
 ## Security boundaries
 
@@ -71,9 +77,10 @@ production security approval.
 | Guide | Contents |
 |---|---|
 | [Shared API](docs/api.md) | Factory, policy sources, per-agent bindings, results, and errors |
+| [Portable contract](docs/portable-contract.md) | Language-independent boundaries and backend acceptance requirements |
 | [CrewAI adapter](docs/crewai/README.md) | Installation, supported execution, hook mapping, and lifecycle |
 | [CrewAI examples](docs/crewai/examples.md) | Complete applications, native-hook migration, and YAML/Rego assets |
-| [Architecture](docs/architecture.md) | Contracts, enforcement flow, and design decisions |
+| [Architecture](docs/architecture.md) | Shared runtime, native integration seams, ownership, and design decisions |
 | [Coverage](docs/coverage.md) | Supported boundaries and enforcement limitations |
 | [Security](SECURITY.md) | Trust model, reporting, and dependency release blockers |
 | [Validation](docs/validation.md) | Test evidence and its scope |

@@ -1,6 +1,14 @@
 """Portable execution API for native Agent Hooks policies and ACS manifests."""
 
-from .contracts import Adapter, AgentPolicy, Backend, RunRequest, RunResult
+from .contracts import (
+    Adapter,
+    AgentPolicy,
+    AsyncAdapter,
+    Backend,
+    NativeRuntime,
+    RunRequest,
+    RunResult,
+)
 from .errors import (
     ACSUnavailableError,
     AdapterBlocked,
@@ -15,7 +23,9 @@ __all__ = [
     "AdapterBlocked",
     "AdapterCleanupError",
     "AgentPolicy",
+    "AsyncAdapter",
     "Backend",
+    "NativeRuntime",
     "RunRequest",
     "RunResult",
     "UnsupportedBackendError",

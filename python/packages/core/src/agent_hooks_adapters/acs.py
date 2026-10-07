@@ -32,9 +32,7 @@ def normalize_policy_file(value: object) -> Path:
     return Path(text).absolute()
 
 
-def load_acs_policy(policy_file: str | Path) -> Interceptor:
-    """Load a native interceptor; missing SDKs fail explicitly and engine errors propagate."""
-    path = normalize_policy_file(policy_file)
+def _acs_module() -> _ACSModule:
     try:
         installed = version("agent-control-spec")
     except PackageNotFoundError as error:
@@ -50,4 +48,18 @@ def load_acs_policy(policy_file: str | Path) -> Interceptor:
         if error.name != "agent_control_spec":
             raise
         raise ACSUnavailableError(_INSTALL_MESSAGE) from error
-    return cast(_ACSModule, module).AcsInterceptor(str(path))
+    return cast(_ACSModule, module)
+
+
+def load_acs_policy(policy_file: str | Path) -> Interceptor:
+    """Load a native interceptor; missing SDKs fail explicitly and engine errors propagate."""
+    path = normalize_policy_file(policy_file)
+    return _acs_module().AcsInterceptor(str(path))
+
+
+def validate_acs_interceptor(interceptor: Interceptor) -> None:
+    """Require the pinned native ACS class for a backend that accepts ACS only."""
+    module = _acs_module()
+    native_type: object = module.AcsInterceptor
+    if not isinstance(native_type, type) or type(interceptor) is not native_type:
+        raise TypeError("This backend requires native ACS interceptors or policy_file")

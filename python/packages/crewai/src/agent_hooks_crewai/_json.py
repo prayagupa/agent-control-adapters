@@ -2,6 +2,12 @@
 
 from __future__ import annotations
 
+from agent_hooks_adapters.codecs import (
+    envelope as envelope,
+)
+from agent_hooks_adapters.codecs import (
+    text_value as text_value,
+)
 from agent_hooks_adapters.json import (
     JSON as JSON,
 )
@@ -11,22 +17,6 @@ from agent_hooks_adapters.json import (
 from agent_hooks_adapters.json import (
     object_value as object_value,
 )
-
-
-def envelope(value: object, keys: set[str]) -> dict[str, JSON]:
-    """Require exactly the supported envelope fields."""
-    result = object_value(value)
-    if set(result) != keys:
-        raise ValueError("Unsupported envelope fields")
-    return result
-
-
-def text_value(value: object) -> str:
-    """Require bounded plain text."""
-    result = normalize(value)
-    if not isinstance(result, str):
-        raise ValueError("Expected text")
-    return result
 
 
 def messages_value(value: object) -> list[dict[str, JSON]]:

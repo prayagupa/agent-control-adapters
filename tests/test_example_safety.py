@@ -73,6 +73,10 @@ def test_examples_are_separated_by_policy_source() -> None:
     }
     assert actual == expected
     assert {path.parent.name for path in actual} == {"agent_hooks", "acs"}
+    guide = (CREWAI_DOCS / "examples.md").read_text()
+    for path in expected:
+        relative = path.relative_to(ROOT).as_posix()
+        assert f"](../../{relative})" in guide
 
 
 def test_framework_guides_live_in_docs() -> None:
@@ -81,11 +85,28 @@ def test_framework_guides_live_in_docs() -> None:
     for guide in ("api.md", "crewai/README.md", "crewai/examples.md"):
         assert (ROOT / "docs" / guide).is_file()
         assert f"(docs/{guide})" in readme
+    for framework in ():
+        guide = f"{framework}/README.md"
+        assert (ROOT / "docs" / guide).is_file()
+        assert f"(docs/{guide})" in readme
+        assert (ROOT / "python" / "packages" / framework / "README.md").is_file()
+    assert (ROOT / "docs" / "portable-contract.md").is_file()
+    assert "(docs/portable-contract.md)" in readme
     assert "respect_context_window" not in readme
     assert "CrewAIAdapter(" not in readme
     assert not (ROOT / "examples" / "crewai" / "README.md").exists()
     for package in ("core", "crewai"):
-        assert (ROOT / "packages" / package / "README.md").is_file()
+        assert (ROOT / "python" / "packages" / package / "README.md").is_file()
+
+
+@pytest.mark.parametrize("package", ["core", "crewai"])
+def test_python_packages_are_grouped_by_language(package: str) -> None:
+    """Keep independently built Python packages in their language directory."""
+    directory = ROOT / "python" / "packages" / package
+    assert (directory / "pyproject.toml").is_file()
+    assert (directory / "src").is_dir()
+    assert (directory / "tests").is_dir()
+    assert not (ROOT / "packages").exists()
 
 
 @pytest.fixture(autouse=True)
@@ -210,11 +231,12 @@ def test_example_source_is_simple_and_self_contained(example: str, max_lines: in
     "filename",
     ["tool_hooks.yaml", "shared.yaml", "researcher.yaml", "editor.yaml", "policy/controls.rego"],
 )
-def test_acs_guide_shows_every_complete_policy_asset(filename: str) -> None:
-    """Keep the documented YAML/Rego files identical to the shipped full bundle."""
-    examples = ROOT / "examples" / "crewai"
-    asset = (examples / "acs" / filename).read_text()
-    assert asset.strip() in (CREWAI_DOCS / "examples.md").read_text()
+def test_acs_guide_links_every_complete_policy_asset(filename: str) -> None:
+    """Link directly to each complete asset instead of duplicating its policy text."""
+    asset = ROOT / "examples" / "crewai" / "acs" / filename
+    assert asset.is_file()
+    link = f"../../examples/crewai/acs/{filename}"
+    assert f"]({link})" in (CREWAI_DOCS / "examples.md").read_text()
 
 
 @pytest.fixture

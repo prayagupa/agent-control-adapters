@@ -9,8 +9,10 @@ from importlib.metadata import PackageNotFoundError
 from pathlib import Path
 from textwrap import dedent
 from types import ModuleType
+from typing import Literal
 
 import agent_hooks_adapters.acs as acs
+import agent_hooks_adapters.factory as factory
 import pytest
 from agent_hooks import ALLOW, AgentContext, InterceptionRecord, Verdict
 from agent_hooks_adapters import (
@@ -19,6 +21,7 @@ from agent_hooks_adapters import (
     AdapterBlocked,
     AdapterCleanupError,
     AgentPolicy,
+    AsyncAdapter,
     Backend,
     RunRequest,
     RunResult,
@@ -58,6 +61,13 @@ class ContractAdapter:
         return RunResult(
             output="completed", records=self.records, records_dropped=self.records_dropped
         )
+
+
+class ContractAsyncAdapter(ContractAdapter):
+    """Exercise the async capability without a framework installation."""
+
+    async def arun(self, request: RunRequest | None = None) -> RunResult:
+        return self.run(request)
 
 
 @pytest.mark.parametrize("inputs", [None, {}])
@@ -252,10 +262,122 @@ def test_common_errors_have_portable_builtin_bases() -> None:
     assert issubclass(UnsupportedBackendError, ValueError)
 
 
-def test_backend_enum_contains_only_the_implemented_backend() -> None:
-    assert tuple(Backend) == (Backend.CREWAI,)
-    assert Backend.CREWAI.value == "crewai"
-    assert Backend("crewai") is Backend.CREWAI
+def test_backend_enum_contains_only_implemented_backends() -> None:
+    expected = {
+        Backend.CREWAI: "crewai",
+        Backend.GOOGLE_ADK: "google-adk",
+        Backend.LANGCHAIN: "langchain",
+        Backend.LANGGRAPH: "langgraph",
+        Backend.OPENAI_AGENTS: "openai-agents",
+        Backend.MAF: "maf",
+    }
+    assert tuple(Backend) == tuple(expected)
+    for backend, value in expected.items():
+        assert backend.value == value
+        assert Backend(value) is backend
+
+
+@pytest.mark.parametrize(
+    ("backend", "namespace"),
+    [
+        (Backend.GOOGLE_ADK, "agent_hooks_google_adk"),
+        (Backend.LANGCHAIN, "agent_hooks_langchain"),
+        (Backend.LANGGRAPH, "agent_hooks_langgraph"),
+        (Backend.OPENAI_AGENTS, "agent_hooks_openai_agents"),
+        (Backend.MAF, "agent_hooks_maf"),
+    ],
+)
+def test_factory_selects_only_the_requested_async_backend(
+    backend: Literal[
+        Backend.GOOGLE_ADK,
+        Backend.LANGCHAIN,
+        Backend.LANGGRAPH,
+        Backend.OPENAI_AGENTS,
+        Backend.MAF,
+    ],
+    namespace: str,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    native_runtime = object()
+    native_agent = object()
+    agents = {"writer": native_agent}
+    assignments = (AgentPolicy("writer", policy_file=tmp_path / "agent.yaml"),)
+    expected = ContractAsyncAdapter()
+    seen: list[dict[str, object]] = []
+    module = ModuleType(f"{namespace}.portable")
+
+    def create_backend(**options: object) -> ContractAsyncAdapter:
+        seen.append(options)
+        return expected
+
+    def selected(name: str) -> ModuleType:
+        assert name == f"{namespace}.portable"
+        return module
+
+    monkeypatch.setattr(module, "create_backend", create_backend, raising=False)
+    monkeypatch.setattr(factory, "import_module", selected)
+    adapter: AsyncAdapter = with_agent_controls(
+        backend=backend,
+        runtime=native_runtime,
+        policy_file=tmp_path / "controls.yaml",
+        agents=agents,
+        agent_policies=assignments,
+        timeout=1,
+        emit_timeout=2,
+        max_records=3,
+    )
+    assert adapter is expected
+    assert seen == [
+        {
+            "runtime": native_runtime,
+            "interceptors": None,
+            "policy_file": tmp_path / "controls.yaml",
+            "agents": agents,
+            "agent_policies": assignments,
+            "resolver": None,
+            "timeout": 1,
+            "emit_timeout": 2,
+            "max_records": 3,
+        }
+    ]
+
+
+@pytest.mark.parametrize(
+    ("backend", "namespace"),
+    [
+        (Backend.CREWAI, "agent_hooks_crewai"),
+        (Backend.GOOGLE_ADK, "agent_hooks_google_adk"),
+        (Backend.LANGCHAIN, "agent_hooks_langchain"),
+        (Backend.LANGGRAPH, "agent_hooks_langgraph"),
+        (Backend.OPENAI_AGENTS, "agent_hooks_openai_agents"),
+        (Backend.MAF, "agent_hooks_maf"),
+    ],
+)
+@pytest.mark.parametrize("missing", ["backend", "dependency", "internal"])
+def test_factory_distinguishes_a_missing_backend_from_a_broken_dependency(
+    backend: Backend, namespace: str, missing: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    missing_name = {
+        "backend": namespace,
+        "dependency": "absent_native_dependency",
+        "internal": f"{namespace}._native",
+    }[missing]
+
+    def missing_import(name: str) -> ModuleType:
+        assert name == f"{namespace}.portable"
+        raise ModuleNotFoundError("selected import failed", name=missing_name)
+
+    monkeypatch.setattr(factory, "import_module", missing_import)
+    if missing == "backend":
+        with pytest.raises(UnsupportedBackendError, match=f"Install the {backend.value}") as caught:
+            with_agent_controls(backend=backend, runtime=object(), policy_file="controls.yaml")
+        assert isinstance(caught.value.__cause__, ModuleNotFoundError)
+        assert caught.value.__cause__.name == missing_name
+    else:
+        with pytest.raises(ModuleNotFoundError) as failed:
+            with_agent_controls(backend=backend, runtime=object(), policy_file="controls.yaml")
+        assert failed.value.name == missing_name
 
 
 def test_original_factory_name_is_a_compatible_alias() -> None:
@@ -363,23 +485,25 @@ def test_optional_import_does_not_hide_nested_failures(
         assert caught.value.name == missing_name
 
 
-@pytest.mark.parametrize("value", ["", "CrewAI", "langchain", "openai", "unknown"])
+@pytest.mark.parametrize("value", ["", "CrewAI", "google_adk", "openai", "unknown"])
 def test_backend_enum_rejects_unknown_values(value: str) -> None:
     with pytest.raises(ValueError):
         Backend(value)
 
 
-@pytest.mark.parametrize("backend", ["", "crewai", "CrewAI", "langchain", "openai", None, 1])
+@pytest.mark.parametrize(
+    "backend", [*(backend.value for backend in Backend), "", "CrewAI", "openai", None, 1]
+)
 def test_factory_requires_a_supported_backend_enum(backend: object) -> None:
     with pytest.raises(UnsupportedBackendError, match="Backend enum member"):
-        create_adapter(
+        create_adapter(  # pyright: ignore[reportCallIssue]
             backend=backend,  # pyright: ignore[reportArgumentType]
             runtime=object(),
             interceptors=[AllowPolicy()],
         )
 
 
-def test_core_contracts_and_unsupported_factory_do_not_import_crewai() -> None:
+def test_core_contracts_and_unsupported_factory_do_not_import_native_backends() -> None:
     program = dedent(
         """
         import sys
@@ -388,7 +512,11 @@ def test_core_contracts_and_unsupported_factory_do_not_import_crewai() -> None:
         class BlockNativeBackend(MetaPathFinder):
             def find_spec(self, fullname, path=None, target=None):
                 if fullname.split(".", 1)[0] in {
-                    "crewai", "agent_hooks_crewai", "agent_control_spec",
+                    "crewai", "agent_hooks_crewai", "agent_hooks_maf",
+                    "agent_hooks_google_adk", "agent_hooks_langchain",
+                    "agent_hooks_langgraph", "agent_hooks_openai_agents",
+                    "agent_framework", "agent_control_spec", "google",
+                    "langchain", "langchain_core", "langgraph", "agents", "openai",
                 }:
                     raise AssertionError("core imported a native backend: " + fullname)
                 return None
@@ -419,8 +547,12 @@ def test_core_contracts_and_unsupported_factory_do_not_import_crewai() -> None:
             else:
                 raise AssertionError("non-enum backend was accepted")
         assert not any(
-            name.split(".", 1)[0] in {"crewai", "agent_hooks_crewai", "agent_control_spec"}
-            for name in sys.modules
+            name.split(".", 1)[0] in {
+                "crewai", "agent_hooks_crewai", "agent_control_spec", "agent_hooks_maf",
+                "agent_hooks_google_adk", "agent_hooks_langchain", "agent_hooks_langgraph",
+                "agent_hooks_openai_agents", "agent_framework", "google", "langchain",
+                "langchain_core", "langgraph", "agents", "openai",
+            } for name in sys.modules
         )
         print("core-only contracts verified")
         """

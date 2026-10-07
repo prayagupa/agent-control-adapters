@@ -1,64 +1,84 @@
 # Contributing
 
-Each `packages/<framework>` directory builds its own wheel and declares only its
-own framework plus agent-hooks dependencies. Do not add empty adapter packages
-or an umbrella install that pulls in every framework.
+Requires Python **3.11-3.13** and [uv](https://docs.astral.sh/uv/).
+Python packages live in `python/packages`; guides in `docs/<framework>`; runnable
+applications in `examples/<framework>`. Keep new languages in their own folders.
 
-For the complete native/ACS change gate, provision the locked optional group:
+## Core and CrewAI
+
+Run from the repository root:
 
 ```bash
-uv sync --locked --group dev --group acs
-uv run --no-sync ruff check .
-uv run --no-sync ruff format --check .
+uv sync --frozen --group dev --group acs
+uv run --no-sync ruff check python/packages/core python/packages/crewai examples/crewai tests
+uv run --no-sync ruff format --check python/packages/core python/packages/crewai examples/crewai tests
 uv run --no-sync pyright
 uv run --no-sync pytest -m 'not e2e'
-LOCAL_MODEL_REQUIRED=1 uv run --no-sync pytest -m e2e
-uv build --package agent-hooks-crewai
-uv build --package agent-hooks-adapters
+uv run --no-sync bandit -r python/packages/core/src python/packages/crewai/src examples/crewai -q
+uv run --no-sync pip-audit --skip-editable --progress-spinner off
+uv build --no-sources python/packages/core
+uv build --no-sources python/packages/crewai
 ```
 
-Default CI runs deterministic checks without downloading models. Local-model
-tests are a separate required evidence tier; a skip is not a pass.
+The audit deliberately remains failing on the
+[known Chroma advisories](SECURITY.md#known-dependency-release-blocker).
+`--skip-editable` excludes only local source distributions, not their third-party
+dependencies. Do not suppress advisories to make the gate appear green.
 
-Native-only contributors can use `uv sync --locked --group dev` and
-`uv run --no-sync pytest -m 'not e2e and not acs'`. That selector deliberately
-does not validate ACS. Selected `acs` tests must fail when the dependency is
-missing, not skip or substitute an evaluator. CI installs both groups and audits
-the whole dependency set.
+## Independent adapters
 
-`agent-control-spec==0.4.0a4` publishes a Linux x86_64 `cp311-abi3` wheel requiring
-glibc >=2.34 and an sdist. Other platforms need a Rust toolchain and source-build
-dependencies/network access; do not silently install a toolchain or impose that
-build on native-only contributors. This aarch64 host successfully built the
-published sdist with rustc/cargo 1.97.1 and glibc 2.43; that is not evidence for
-every platform. Bound lock, sync and build operations to 600 seconds, and report
-a timeout as missing evidence rather than a pass.
+The root workspace owns only core and CrewAI. Each additional adapter owns its
+lockfile and virtual environment. Do not install incompatible framework closures
+together or lint all projects using one project's configuration.
 
-Run these checks before proposing a change. Before widening a dependency range, run the
-real-runner integration suite against every supported version. Publish packages
-independently; future release tags should identify the adapter, for example
-`crewai/v0.1.0a1`. No automatic publication workflow is enabled here.
+From an independent adapter directory under `python/packages/<framework>`:
 
-Keep the root README a framework-neutral product overview. Put framework-specific
-installation, usage, coverage, and example guides in `docs/<framework>/`.
-Package READMEs should link to those guides; complete runnable applications stay
-in `examples/<framework>/`.
+```bash
+uv sync --locked --all-groups --all-extras
+uv run --no-sync ruff check src tests ../../../examples/<framework>
+uv run --no-sync ruff format --check src tests ../../../examples/<framework>
+uv run --no-sync pyright
+uv run --no-sync pytest -c pyproject.toml --rootdir . -m 'not e2e'
+uv run --no-sync bandit -r src ../../../examples/<framework> -q
+uv build --no-sources .
+```
 
-Keep public Python APIs typed, run strict pyright, and prefer small explicit
-boundary mappings over private framework patches. Unit tests may stub model
-I/O. Integration tests must use the real framework runner and SDK emitter.
-Model-behavior examples must use a real local model and retain honest receipts.
-Copy the entire `examples/crewai/acs/` folder, including its scripts and policy
-assets, when testing outside the checkout. Native Python-policy examples are
-separate standalone files in `examples/crewai/agent_hooks/`.
-Never demonstrate governance using canned model
-responses or ACS's scripted `test` policy type.
+Replace `<framework>` with the selected package directory. LangChain also needs
+the sibling LangGraph adapter; MAF uses native ACS middleware. See the
+[available adapter guides](README.md#get-started) and
+[CI](.github/workflows/ci.yml) for exact independent audit/build/import commands.
+When relocating an existing environment, add `--reinstall` to the locked sync
+to refresh absolute entry-point paths.
 
-Every new adapter must document its enforcement coverage, transforms, failure
-behavior, concurrency and lifecycle ownership. Observation hooks are not
-automatically enforcement hooks. Do not weaken upstream conformance assertions
-to make an adapter pass.
+## Test expectations
 
-Never commit credentials, model weights, virtual environments or private
-prompts. Obtain explicit authorization before publishing packages, creating
-remote repositories, or changing upstream framework repositories.
+Keep deterministic tests fast and local. Cover native framework boundaries,
+fail-closed denial, invalid transforms, actual-object bindings, atomic accounting,
+timeout/cancellation, bounded retained state, and cleanup postconditions.
+Mocks are allowed at the model boundary only for deterministic tests.
+
+Model tests are marked `e2e`. They require an operator-managed loopback Ollama
+service and a real local Kimi/Qwen model; see [validation](docs/validation.md)
+before running them. Use the owning project with `pytest -m e2e`, record the exact
+snapshot/model/settings, and report unexecuted or skipped cases as missing
+evidence. Examples must never present canned model output as a real run.
+
+Current model repair budgets were exhausted. Do not restart the model service,
+warm it up, alter provider settings, or retry missing acceptance without a new
+scoped run grant.
+
+## Change checklist
+
+- Preserve existing user changes and each package's dependency isolation.
+- Keep public contracts typed and source-compatible; validate trusted/untrusted
+  boundaries and expose failures rather than returning defaults.
+- Keep package READMEs brief, use portable documentation links, and include the
+  original MIT notice in independently built wheels and sdists.
+- Update the directly related guide, coverage, and runnable assets.
+- Run applicable tests, lint, strict types, security scans, and isolated builds.
+  Documentation-only edits do not require unrelated model execution.
+- Never log secrets or publish raw prompt/tool payloads by default.
+
+Use Conventional Commits with DCO sign-off (`git commit -s`). Publishing source
+does not authorize changing repository visibility or uploading to PyPI. Review
+the [security policy](SECURITY.md) before requesting production approval.

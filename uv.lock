@@ -29,7 +29,7 @@ wheels = [
 [[package]]
 name = "agent-hooks-adapters"
 version = "0.1.0a1"
-source = { editable = "packages/core" }
+source = { editable = "python/packages/core" }
 dependencies = [
     { name = "agent-hooks-sdk" },
 ]
@@ -45,7 +45,7 @@ crewai = [
 [package.metadata]
 requires-dist = [
     { name = "agent-control-spec", marker = "extra == 'acs'", specifier = "==0.4.0a4" },
-    { name = "agent-hooks-crewai", marker = "extra == 'crewai'", editable = "packages/crewai" },
+    { name = "agent-hooks-crewai", marker = "extra == 'crewai'", editable = "python/packages/crewai" },
     { name = "agent-hooks-sdk", specifier = "==0.1.0a5" },
 ]
 provides-extras = ["acs", "crewai"]
@@ -74,7 +74,7 @@ dev = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "agent-hooks-crewai", editable = "packages/crewai" }]
+requires-dist = [{ name = "agent-hooks-crewai", editable = "python/packages/crewai" }]
 
 [package.metadata.requires-dev]
 acs = [{ name = "agent-control-spec", specifier = "==0.4.0a4" }]
@@ -92,7 +92,7 @@ dev = [
 [[package]]
 name = "agent-hooks-crewai"
 version = "0.1.0a1"
-source = { editable = "packages/crewai" }
+source = { editable = "python/packages/crewai" }
 dependencies = [
     { name = "agent-hooks-adapters" },
     { name = "agent-hooks-sdk" },
@@ -101,7 +101,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "agent-hooks-adapters", editable = "packages/core" },
+    { name = "agent-hooks-adapters", editable = "python/packages/core" },
     { name = "agent-hooks-sdk", specifier = "==0.1.0a5" },
     { name = "crewai", specifier = "==1.15.23" },
 ]
