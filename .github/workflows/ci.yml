@@ -29,6 +29,82 @@ jobs:
       - run: uv build --package agent-hooks-crewai
       - run: uv build --package agent-hooks-adapters
 
+  adapters:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - backend: google-adk
+            namespace: agent_hooks_google_adk
+    defaults:
+      run:
+        working-directory: python/packages/${{ matrix.backend }}
+    env:
+      ADAPTER_BACKEND: ${{ matrix.backend }}
+      ADAPTER_NAMESPACE: ${{ matrix.namespace }}
+      OTEL_SDK_DISABLED: "true"
+      CREWAI_TRACING_ENABLED: "false"
+      CREWAI_TELEMETRY_ENABLED: "false"
+      ANONYMIZED_TELEMETRY: "false"
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: astral-sh/setup-uv@d0d8abe699bfb85fec6de9f7adb5ae17292296ff # v6
+        with:
+          python-version: "3.11"
+          enable-cache: true
+      - run: uv sync --locked --all-groups --all-extras
+      - run: uv run --no-sync ruff check src tests ../../../examples/${{ matrix.backend }}
+      - run: uv run --no-sync ruff format --check src tests ../../../examples/${{ matrix.backend }}
+      - run: uv run --no-sync pyright
+      - run: uv run --no-sync pytest -c pyproject.toml --rootdir . -m 'not e2e'
+      - run: uv run --no-sync bandit -r src ../../../examples/${{ matrix.backend }} -q
+      - name: Audit the independent locked public dependency closure
+        run: |
+          uv export --locked --all-groups --all-extras --no-hashes \
+            --no-emit-project --no-emit-package agent-hooks-adapters \
+            --no-emit-package agent-hooks-langgraph --output-file audit-requirements.txt
+          uv run --no-sync pip-audit --disable-pip --no-deps \
+            -r audit-requirements.txt --progress-spinner off
+      - name: Build the core and selected adapter independently
+        run: |
+          uv build --no-sources ../core --out-dir ../../../dist/${{ matrix.backend }}
+          uv build --no-sources . --out-dir ../../../dist/${{ matrix.backend }}
+          if [ "$ADAPTER_BACKEND" = langchain ]; then
+            uv build --no-sources ../langgraph --out-dir ../../../dist/${{ matrix.backend }}
+          fi
+      - name: Install and import noneditable wheels without the checkout
+        run: |
+          uv export --locked --all-extras --no-dev --no-default-groups --no-hashes \
+            --no-emit-project --no-emit-package agent-hooks-adapters \
+            --no-emit-package agent-hooks-langgraph --output-file wheel-requirements.txt
+          uv venv --python 3.11 .wheel-smoke
+          uv pip install --python .wheel-smoke/bin/python --no-deps \
+            -r wheel-requirements.txt ../../../dist/${{ matrix.backend }}/*.whl
+          .wheel-smoke/bin/python -I - <<'PY'
+          import importlib
+          import importlib.util
+          import os
+          import site
+          from pathlib import Path
+          from agent_hooks_adapters import Backend
+
+          assert Backend(os.environ["ADAPTER_BACKEND"]).value == os.environ["ADAPTER_BACKEND"]
+          names = ["agent_hooks_adapters", os.environ["ADAPTER_NAMESPACE"]]
+          if os.environ["ADAPTER_BACKEND"] == "langchain":
+              names.append("agent_hooks_langgraph")
+          roots = tuple(Path(path).resolve() for path in site.getsitepackages())
+          for name in names:
+              module = importlib.import_module(name)
+              origin = Path(module.__file__).resolve()
+              assert any(origin.is_relative_to(root) for root in roots), (name, origin)
+              print(name, origin)
+          portable = importlib.import_module(os.environ["ADAPTER_NAMESPACE"] + ".portable")
+          assert callable(portable.create_backend)
+          assert importlib.util.find_spec("crewai") is None
+          PY
+
   security:
     runs-on: ubuntu-latest
     timeout-minutes: 15

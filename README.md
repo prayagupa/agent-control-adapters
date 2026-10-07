@@ -44,6 +44,7 @@ framework configuration, and complete runnable examples:
 | Framework | Adapter package | Controls | Execution | Documentation |
 |---|---|---|---|---|
 | CrewAI | `agent-hooks-crewai` | Agent Hooks or ACS | Sync | [Adapter guide](docs/crewai/README.md) / [Complete examples](docs/crewai/examples.md) |
+| Google ADK | `agent-hooks-google-adk` | Agent Hooks or ACS | Async | [Adapter guide](docs/google-adk/README.md) |
 
 Each adapter has an explicit supported execution profile; review its guide and
 [coverage](docs/coverage.md) before using it for enforcement. Use separate

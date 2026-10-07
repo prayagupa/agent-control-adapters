@@ -1,0 +1,15 @@
+agent_control_specification_version: "0.5.0-alpha.1"
+policies:
+  tool:
+    type: rego
+    bundle: ./policy
+    query: data.adk_tools.verdict
+intervention_points:
+  agent_startup: {policy_target: "$snap.target", policy: {id: tool}}
+  input: {policy_target: "$snap.target", policy: {id: tool}}
+  pre_model_call: {policy_target: "$snap.target", policy: {id: tool}}
+  post_model_call: {policy_target: "$snap.target", policy: {id: tool}}
+  pre_tool_call: {policy_target: "$snap.target", policy: {id: tool}}
+  post_tool_call: {policy_target: "$snap.target", policy: {id: tool}}
+  output: {policy_target: "$snap.target", policy: {id: tool}}
+  agent_shutdown: {policy_target: "$snap.target", policy: {id: tool}}

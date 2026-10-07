@@ -1,0 +1,6 @@
+agent-hooks-google-adk[acs]==0.1.0a1
+google-adk==2.11.0
+agent-control-spec==0.4.0a4
+litellm==1.104.0
+openai==2.54.0
+httpx>=0.28.1,<1
