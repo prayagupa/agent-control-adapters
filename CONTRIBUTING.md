@@ -82,3 +82,23 @@ scoped run grant.
 Use Conventional Commits with DCO sign-off (`git commit -s`). Publishing source
 does not authorize changing repository visibility or uploading to PyPI. Review
 the [security policy](SECURITY.md) before requesting production approval.
+
+## Manual releases
+
+The [release workflow](.github/workflows/release.yml) is adapted from
+[Agent Hooks](https://github.com/prayagupa/agent-hooks/blob/main/.github/workflows/release.yml).
+Only manual dispatch starts it; pushes, tags and GitHub releases do not.
+`dry_run=true` is the default: build all seven wheels/sdists, verify their names
+and shared version, and save checksummed preview artifacts. It does not publish
+or create attestations, tags, or GitHub releases.
+
+Before a non-dry run, clear every [release blocker](docs/validation.md), configure
+required reviewers and tag restrictions on the `release` environment, and add
+PyPI trusted publishers for all seven `agent-control-*` projects using this
+repository, `release.yml`, and that environment. No stored PyPI token is needed.
+
+Select an existing `v<version>` tag and explicitly set `dry_run=false`. Every
+package version must match the tag, and the latest push CI run for its exact SHA
+must be successful, including the unsuppressed dependency audit. The protected
+job verifies downloaded checksums, attests provenance and publishes to PyPI.
+Uploads are not atomic; retries skip distributions already published.

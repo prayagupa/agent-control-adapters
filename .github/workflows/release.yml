@@ -1,0 +1,126 @@
+# Adapted from prayagupa/agent-hooks/.github/workflows/release.yml (MIT).
+# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: MIT
+name: Release
+
+"on":
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Build all Python packages without attestation or PyPI publication
+        type: boolean
+        required: true
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-python
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      actions: read
+    outputs:
+      version: ${{ steps.metadata.outputs.version }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: astral-sh/setup-uv@d0d8abe699bfb85fec6de9f7adb5ae17292296ff # v6
+        with:
+          python-version: "3.11"
+          enable-cache: true
+      - name: Validate versions and publication prerequisites
+        id: metadata
+        env:
+          DRY_RUN: ${{ inputs.dry_run }}
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          version="$(uv version --project python/packages/core --short)"
+          for package in core crewai google-adk langgraph langchain openai-agents maf; do
+            package_version="$(uv version --project "python/packages/$package" --short)"
+            if [[ "$package_version" != "$version" ]]; then
+              echo "::error::All seven package versions must match: $package has $package_version, expected $version"
+              exit 1
+            fi
+          done
+          if [[ "$DRY_RUN" == false ]]; then
+            if [[ "$GITHUB_REF_TYPE" != tag || "$GITHUB_REF_NAME" != "v$version" ]]; then
+              echo "::error::Publishing requires the existing tag v$version"
+              exit 1
+            fi
+            ci_state="$(gh run list --repo "$GITHUB_REPOSITORY" --workflow ci.yml \
+              --commit "$GITHUB_SHA" --event push --limit 1 \
+              --json status,conclusion --jq '.[0] | [.status, .conclusion] | @tsv')"
+            if [[ "$ci_state" != $'completed\tsuccess' ]]; then
+              echo "::error::Publishing requires successful CI for $GITHUB_SHA, including its security audit"
+              exit 1
+            fi
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+      - name: Build and verify all seven distributions
+        id: distributions
+        env:
+          RELEASE_VERSION: ${{ steps.metadata.outputs.version }}
+        shell: bash
+        run: |
+          for package in core crewai google-adk langgraph langchain openai-agents maf; do
+            uv build --no-sources "python/packages/$package" --out-dir dist/release/packages
+          done
+          for extension in whl tar.gz; do
+            count="$(find dist/release/packages -maxdepth 1 -type f -name "*.$extension" | wc -l)"
+            if [[ "$count" -ne 7 ]]; then
+              echo "::error::Expected seven $extension distributions, found $count"
+              exit 1
+            fi
+          done
+          for suffix in adapters crewai google_adk langgraph langchain openai_agents maf; do
+            for filename in "agent_control_${suffix}-${RELEASE_VERSION}-py3-none-any.whl" \
+              "agent_control_${suffix}-${RELEASE_VERSION}.tar.gz"; do
+              artifact="dist/release/packages/$filename"
+              if [[ ! -f "$artifact" ]]; then
+                echo "::error::Missing distribution: $artifact"
+                exit 1
+              fi
+            done
+          done
+          (cd dist/release && sha256sum packages/*.whl packages/*.tar.gz > SHA256SUMS)
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: python-distributions
+          path: dist/release/
+          if-no-files-found: error
+          retention-days: 14
+
+  publish:
+    if: ${{ github.event_name == 'workflow_dispatch' && !inputs.dry_run }}
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: release
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+    steps:
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: python-distributions
+          path: dist/release/
+      - name: Verify downloaded distributions
+        shell: bash
+        run: cd dist/release && sha256sum --check SHA256SUMS
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@0f67c3f4856b2e3261c31976d6725780e5e4c373 # v4.1.1
+        with:
+          subject-path: dist/release/packages/*
+      - name: Publish to PyPI using trusted publishing
+        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1
+        with:
+          packages-dir: dist/release/packages/
+          skip-existing: true
