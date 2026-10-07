@@ -85,7 +85,7 @@ def test_framework_guides_live_in_docs() -> None:
     for guide in ("api.md", "crewai/README.md", "crewai/examples.md"):
         assert (ROOT / "docs" / guide).is_file()
         assert f"(docs/{guide})" in readme
-    for framework in ("google-adk", "langgraph"):
+    for framework in ("google-adk", "langgraph", "langchain"):
         guide = f"{framework}/README.md"
         assert (ROOT / "docs" / guide).is_file()
         assert f"(docs/{guide})" in readme
@@ -99,7 +99,7 @@ def test_framework_guides_live_in_docs() -> None:
         assert (ROOT / "python" / "packages" / package / "README.md").is_file()
 
 
-@pytest.mark.parametrize("package", ["core", "crewai", "google-adk", "langgraph"])
+@pytest.mark.parametrize("package", ["core", "crewai", "google-adk", "langgraph", "langchain"])
 def test_python_packages_are_grouped_by_language(package: str) -> None:
     """Keep independently built Python packages in their language directory."""
     directory = ROOT / "python" / "packages" / package
@@ -109,7 +109,7 @@ def test_python_packages_are_grouped_by_language(package: str) -> None:
     assert not (ROOT / "packages").exists()
 
 
-@pytest.mark.parametrize("framework", ["google-adk", "langgraph"])
+@pytest.mark.parametrize("framework", ["google-adk", "langgraph", "langchain"])
 def test_new_adapter_examples_use_the_shared_policy_source_layout(framework: str) -> None:
     """Keep complete scripts in the user-facing agent_hooks and acs folders."""
     directory = ROOT / "examples" / framework

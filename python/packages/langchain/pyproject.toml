@@ -1,0 +1,83 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "agent-hooks-langchain"
+version = "0.1.0a1"
+description = "Bounded native LangChain middleware with application-owned agents"
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Typing :: Typed",
+]
+requires-python = ">=3.11,<3.14"
+dependencies = [
+    "agent-hooks-adapters==0.1.0a1",
+    "agent-hooks-langgraph==0.1.0a1",
+    "langchain==1.4.3",
+    "langchain-core==1.6.6",
+    "langgraph==1.2.13",
+    "langgraph-prebuilt==1.1.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/prayagupa/agent-control-adapters"
+Documentation = "https://github.com/prayagupa/agent-control-adapters/blob/main/docs/langchain/README.md"
+Source = "https://github.com/prayagupa/agent-control-adapters"
+Issues = "https://github.com/prayagupa/agent-control-adapters/issues"
+
+[project.optional-dependencies]
+acs = ["agent-control-spec==0.4.0a4"]
+
+[dependency-groups]
+dev = [
+    "langchain-openai==1.6.7",
+    "openai==3.24.0",
+    "httpx2==2.13.1",
+    "bandit>=1.8,<2",
+    "build>=1.2,<2",
+    "pip-audit>=2.9,<3",
+    "pyright>=1.1.400,<2",
+    "pytest>=8.3,<10",
+    "ruff>=0.15,<0.16",
+]
+
+[tool.uv.sources]
+agent-hooks-adapters = { path = "../core", editable = true }
+agent-hooks-langgraph = { path = "../langgraph", editable = true }
+
+[[tool.uv.index]]
+name = "pypi"
+url = "https://pypi.org/simple"
+default = true
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/agent_hooks_langchain"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "SIM", "RUF"]
+
+[tool.pyright]
+typeCheckingMode = "strict"
+pythonVersion = "3.11"
+include = ["src", "tests", "../../../examples/langchain", "../core/src", "../langgraph/src", "../../../tests/agent_adapter_conformance.py"]
+venvPath = "."
+venv = ".venv"
+extraPaths = ["tests", "../langgraph/tests", "../../../tests"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["tests", "../langgraph/tests", "../../../tests", "../../.."]
+addopts = "-ra -p no:agent_hooks_ctk"
+markers = ["e2e: requires the operator-managed local Ollama model"]

@@ -45,6 +45,7 @@ framework configuration, and complete runnable examples:
 |---|---|---|---|---|
 | CrewAI | `agent-hooks-crewai` | Agent Hooks or ACS | Sync | [Adapter guide](docs/crewai/README.md) / [Complete examples](docs/crewai/examples.md) |
 | Google ADK | `agent-hooks-google-adk` | Agent Hooks or ACS | Async | [Adapter guide](docs/google-adk/README.md) |
+| LangChain | `agent-hooks-langchain` | Agent Hooks or ACS | Native sync / async | [Adapter guide](docs/langchain/README.md) |
 | LangGraph | `agent-hooks-langgraph` | Agent Hooks or ACS | Native sync / async | [Adapter guide](docs/langgraph/README.md) |
 
 Each adapter has an explicit supported execution profile; review its guide and

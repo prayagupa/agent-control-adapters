@@ -38,6 +38,8 @@ jobs:
         include:
           - backend: google-adk
             namespace: agent_hooks_google_adk
+          - backend: langchain
+            namespace: agent_hooks_langchain
           - backend: langgraph
             namespace: agent_hooks_langgraph
     defaults:
