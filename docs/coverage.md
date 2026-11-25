@@ -3,8 +3,8 @@
 ## Backend profiles
 
 The shared [portable contract](portable-contract.md) does not make framework
-features interchangeable. All adapters use SDK **0.1.0a5**; ACS controls use
-**0.4.0a4**. Python support remains **3.11-3.13**. Install and validate each
+features interchangeable. All adapters use SDK **0.1.0b3**; ACS controls use
+**0.4.0b2**, which requires the same SDK pin. Python support remains **3.11-3.13**. Install and validate each
 independently locked environment rather than one combined dependency closure.
 
 | Backend | Pinned framework | Controls and native execution | Complete profile |
@@ -26,7 +26,7 @@ guide; unsupported changes fail closed.
 ## CrewAI compatibility
 
 Dependency contract: Python 3.11-3.13, CrewAI **1.15.23**, agent-hooks-sdk
-**0.1.0a5**. Runtime execution evidence records the actual interpreter separately;
+**0.1.0b3**. Runtime execution evidence records the actual interpreter separately;
 declaring a Python range does not mean every interpreter/platform was tested.
 The SDK includes a compiled native core; moving it outside CrewAI does **not**
 remove that dependency for applications installing this adapter.
@@ -58,7 +58,7 @@ The adapter deliberately does **not** register `PRE_STEP` or `POST_STEP`.
 
 Install the optional `[crewai,acs]` extra (or development `acs` group) and use
 `policy_file` instead of `interceptors`. The pinned runtime is
-`agent-control-spec==0.4.0a4`, using SDK 0.1.0a5. It accepts the native
+`agent-control-spec==0.4.0b2`, using SDK 0.1.0b3. It accepts the native
 0.4.0-alpha.1 and 0.5.0-alpha.1 manifest contracts. Tested controls use real
 Rego bundles and canonical top-level SDK `agent`, `session`, `target` and
 `tool_call` fields; the host does not translate metadata or implement a DSL.
@@ -99,7 +99,7 @@ Use the native `ActivatedPolicy` API separately for deployment preflight, with
 its deadline caveats, or a trusted prebuilt `AcsInterceptor` through
 `interceptors=` for custom limits/cache reuse.
 
-ACS 0.4.0a4 provides a Linux x86_64 wheel requiring glibc >=2.34; other platforms
+ACS 0.4.0b2 provides a Linux x86_64 wheel requiring glibc >=2.34; other platforms
 need a source build/toolchain. See [contributing](../CONTRIBUTING.md) and
 [security](../SECURITY.md#acs-configuration-is-trusted-code). ACS is optional:
 the native-only source path imports no ACS module.

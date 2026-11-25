@@ -114,7 +114,7 @@ def _example(
     assert versions == {
         "agent-framework-core": "1.20.0",
         "agent-framework-openai": "1.15.0",
-        "agent-control-spec": "0.4.0a4",
+        "agent-control-spec": "0.4.0b2",
         "openai": "3.24.0",
         "httpx2": "2.13.1",
         "agent-control-adapters": "0.1.0a1",

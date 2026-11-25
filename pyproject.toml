@@ -28,7 +28,7 @@ agent-control-adapters = { workspace = true }
 agent-control-crewai = { workspace = true }
 
 [dependency-groups]
-acs = ["agent-control-spec==0.4.0a4"]
+acs = ["agent-control-spec==0.4.0b2"]
 dev = [
     "bandit>=1.8,<2",
     "build>=1.2,<2",

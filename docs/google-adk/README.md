@@ -19,7 +19,7 @@ uv run --directory python/packages/google-adk --no-sync \
 ```
 
 Omit `--extra acs` for native Agent Hooks only. This package owns its lock and
-environment, uses sibling `../core`, and pins ACS **0.4.0a4** when selected.
+environment, uses sibling `../core`, and pins ACS **0.4.0b2** when selected.
 Examples use LiteLLM **1.104.0**. ADK's OpenTelemetry/websockets requirements
 conflict with CrewAI: never install this profile in the root CrewAI environment.
 See [contributing](../../CONTRIBUTING.md) and [CI](../../.github/workflows/ci.yml)

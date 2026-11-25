@@ -1,5 +1,5 @@
 agent-control-adapters==0.1.0a1
 agent-control-openai-agents[acs]==0.1.0a1
-agent-control-spec==0.4.0a4
+agent-control-spec==0.4.0b2
 openai-agents==0.23.1
 openai==3.24.0

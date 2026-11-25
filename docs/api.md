@@ -11,7 +11,7 @@ LangGraph, OpenAI Agents SDK and Microsoft Agent Framework have independently
 locked environments; do not combine them into the CrewAI workspace.
 The `agent-control-adapters` distribution declares `[crewai]` and `[acs]` extras;
 `[crewai,acs]` selects both the backend and the optional, pinned
-`agent-control-spec==0.4.0a4` runtime. Adapter distributions are not yet published
+`agent-control-spec==0.4.0b2` runtime. Adapter distributions are not yet published
 to PyPI.
 Import `Backend` from `agent_control_adapters` and select an implemented member:
 `Backend.CREWAI`, `Backend.GOOGLE_ADK`, `Backend.LANGCHAIN`,

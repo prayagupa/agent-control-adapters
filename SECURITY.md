@@ -21,7 +21,7 @@ and must not be used as a production authorization mechanism.
 ## ACS configuration is trusted code
 
 The optional `policy_file` source uses the published native
-`agent-control-spec==0.4.0a4` interceptor. Policy paths, manifests, Rego modules,
+`agent-control-spec==0.4.0b2` interceptor. Policy paths, manifests, Rego modules,
 data, inheritance and annotators must be owned by the application, never chosen
 by a model, tool result or tenant request. Keep all referenced files immutable
 for the run. Native manifest parsing is eager, but Rego loading/compilation is

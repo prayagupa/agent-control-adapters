@@ -12,7 +12,7 @@ from agent_hooks import Interceptor
 
 from .errors import ACSUnavailableError
 
-ACS_VERSION = "0.4.0a4"
+ACS_VERSION = "0.4.0b2"
 _INSTALL_MESSAGE = "Install 'agent-control-adapters[acs]' to use ACS policy files."
 
 

@@ -16,7 +16,7 @@ uv run --directory python/packages/openai-agents --no-sync pytest \
 
 The package has its own lock and `.venv`, and uses editable local core
 `agent-control-adapters==0.1.0a1` from `../core`. The optional `acs` extra pins
-`agent-control-spec==0.4.0a4`. Neither selects the core `crewai` extra.
+`agent-control-spec==0.4.0b2`. Neither selects the core `crewai` extra.
 JSON Schema 4.26.0 validates tool arguments; it is not a governance evaluator.
 
 The ordinary suite includes public factory and registration checks against

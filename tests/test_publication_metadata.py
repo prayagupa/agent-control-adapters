@@ -40,9 +40,11 @@ def test_product_distributions_and_namespaces_use_agent_control(manifest: Path) 
     dependencies = project["dependencies"]
     assert isinstance(dependencies, list)
     if suffix == "adapters":
-        assert dependencies == ["agent-hooks-sdk==0.1.0a5"]
+        assert dependencies == ["agent-hooks-sdk==0.1.0b3"]
     else:
         assert "agent-control-adapters==0.1.0a1" in dependencies
+        if suffix == "crewai":
+            assert "agent-hooks-sdk==0.1.0b3" in dependencies
 
 
 @pytest.mark.parametrize("manifest", MANIFESTS, ids=[path.parent.name for path in MANIFESTS])

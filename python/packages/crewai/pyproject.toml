@@ -21,7 +21,7 @@ requires-python = ">=3.11,<3.14"
 dependencies = [
   "agent-control-adapters==0.1.0a1",
   "crewai==1.15.23",
-  "agent-hooks-sdk==0.1.0a5",
+  "agent-hooks-sdk==0.1.0b3",
 ]
 
 [project.urls]

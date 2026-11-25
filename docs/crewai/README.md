@@ -10,8 +10,8 @@ Current real-model acceptance is also incomplete; see [validation](../validation
 
 ## Install from source
 
-Requires Python **3.11-3.13**, CrewAI **1.15.23**, and Agent Hooks SDK **0.1.0a5**.
-ACS support uses **agent-control-spec 0.4.0a4**.
+Requires Python **3.11-3.13**, CrewAI **1.15.23**, and Agent Hooks SDK **0.1.0b3**.
+ACS support uses **agent-control-spec 0.4.0b2**.
 
 ```bash
 git clone https://github.com/prayagupa/agent-control-adapters.git

@@ -34,7 +34,7 @@ Source = "https://github.com/prayagupa/agent-control-adapters"
 Issues = "https://github.com/prayagupa/agent-control-adapters/issues"
 
 [project.optional-dependencies]
-acs = ["agent-control-spec==0.4.0a4"]
+acs = ["agent-control-spec==0.4.0b2"]
 
 [dependency-groups]
 dev = [

@@ -90,7 +90,7 @@ def make_worker(
     max_records: int = 32,
     trace_id: str | None = None,
 ) -> Worker:
-    # SDK 0.1.0a5 awaits these policies, but its public protocol describes only sync returns.
+    # The SDK awaits async policies, but its Interceptor protocol describes only sync returns.
     return Worker(
         {0: Binding(_IDENTITY, (cast("Interceptor", policy),), _SESSION)},
         None,
